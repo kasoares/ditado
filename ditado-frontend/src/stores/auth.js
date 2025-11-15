@@ -7,6 +7,10 @@ export const useAuthStore = defineStore('auth', () => {
   const usuario = ref(JSON.parse(localStorage.getItem('usuario') || 'null'))
 
   const estaAutenticado = computed(() => !!token.value)
+  const tipoUsuario = computed(() => usuario.value?.tipo)
+  const ehAdministrador = computed(() => tipoUsuario.value === 'Administrador')
+  const ehProfessor = computed(() => tipoUsuario.value === 'Professor')
+  const ehAluno = computed(() => tipoUsuario.value === 'Aluno')
 
   async function login(login, senha) {
     try {
@@ -47,6 +51,10 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     usuario,
     estaAutenticado,
+    tipoUsuario,
+    ehAdministrador,
+    ehProfessor,
+    ehAluno,
     login,
     logout,
     atualizarUsuario

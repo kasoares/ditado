@@ -22,7 +22,49 @@ const routes = [
       {
         path: '',
         name: 'Home',
-        component: () => import('@/views/Home.vue')
+        redirect: to => {
+          const authStore = useAuthStore()
+          if (authStore.ehAdministrador) return '/admin'
+          if (authStore.ehProfessor) return '/professor'
+          if (authStore.ehAluno) return '/aluno'
+          return '/login'
+        }
+      },
+      {
+        path: '/admin',
+        name: 'PainelAdministrador',
+        component: () => import('@/views/PainelAdministrador.vue'),
+        meta: { requerTipo: 'Administrador' }
+      },
+      {
+        path: '/professor',
+        name: 'PainelProfessor',
+        component: () => import('@/views/PainelProfessor.vue'),
+        meta: { requerTipo: 'Professor' }
+      },
+      {
+        path: '/cadastro-ditado',
+        name: 'CadastroDitado',
+        component: () => import('@/views/CadastroDitado.vue'),
+        meta: { requerTipo: 'Professor' }
+      },
+      {
+        path: '/aluno',
+        name: 'PainelAluno',
+        component: () => import('@/views/PainelAluno.vue'),
+        meta: { requerTipo: 'Aluno' }
+      },
+      {
+        path: '/realizar-ditado/:id',
+        name: 'RealizarDitado',
+        component: () => import('@/views/RealizarDitado.vue'),
+        meta: { requerTipo: 'Aluno' }
+      },
+      {
+        path: '/resultado-ditado/:id',
+        name: 'ResultadoDitado',
+        component: () => import('@/views/ResultadoDitado.vue'),
+        meta: { requerTipo: 'Aluno' }
       },
       {
         path: '/perfil',
@@ -32,7 +74,8 @@ const routes = [
       {
         path: '/usuarios',
         name: 'Usuarios',
-        component: () => import('@/views/Usuarios.vue')
+        component: () => import('@/views/Usuarios.vue'),
+        meta: { requerTipo: 'Administrador' }
       }
     ]
   }
@@ -49,7 +92,27 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requerAutenticacao && !authStore.estaAutenticado) {
     next('/login')
   } else if (to.path === '/login' && authStore.estaAutenticado) {
-    next('/')
+    // Redirecionar para o painel correto após login
+    if (authStore.ehAdministrador) {
+      next('/admin')
+    } else if (authStore.ehProfessor) {
+      next('/professor')
+    } else if (authStore.ehAluno) {
+      next('/aluno')
+    } else {
+      next('/')
+    }
+  } else if (to.meta.requerTipo && to.meta.requerTipo !== authStore.tipoUsuario) {
+    // Verificar se o usuário tem permissão para acessar a rota
+    if (authStore.ehAdministrador) {
+      next('/admin')
+    } else if (authStore.ehProfessor) {
+      next('/professor')
+    } else if (authStore.ehAluno) {
+      next('/aluno')
+    } else {
+      next('/login')
+    }
   } else {
     next()
   }

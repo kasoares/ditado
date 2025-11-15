@@ -41,8 +41,15 @@ export const usuarioService = {
   },
 
   async atualizar(id, dados) {
-    const response = await api.put(`/Usuarios/${id}`, dados)
-    return response.data
+    try {
+      console.log('Atualizando usuário:', id, dados)
+      const response = await api.put(`/Usuarios/${id}`, dados)
+      console.log('Resposta da atualização:', response.data)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao atualizar usuário:', erro.response?.data || erro)
+      throw erro
+    }
   },
 
   async deletar(id) {

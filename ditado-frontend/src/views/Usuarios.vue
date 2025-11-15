@@ -189,6 +189,17 @@
                 />
               </v-col>
 
+              <v-col cols="12">
+                <label class="text-body-2 text-grey-darken-2 mb-2 d-block">Matrícula</label>
+                <v-text-field
+                  v-model="formDados.matricula"
+                  placeholder="Digite a matrícula (opcional)"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details="auto"
+                />
+              </v-col>
+
               <v-col cols="12" v-if="!usuarioEditando">
                 <label class="text-body-2 text-grey-darken-2 mb-2 d-block">Senha</label>
                 <v-text-field
@@ -203,6 +214,43 @@
                   hide-details="auto"
                 />
               </v-col>
+
+              <!-- Campos de alteração de senha para edição -->
+              <template v-if="usuarioEditando">
+                <v-col cols="12">
+                  <v-divider class="my-2"></v-divider>
+                  <p class="text-caption text-grey-darken-1 mb-2">Deixe em branco para não alterar a senha</p>
+                </v-col>
+
+                <v-col cols="12">
+                  <label class="text-body-2 text-grey-darken-2 mb-2 d-block">Senha Atual</label>
+                  <v-text-field
+                    v-model="formDados.senhaAtual"
+                    placeholder="Digite a senha atual"
+                    :type="mostrarSenhaAtual ? 'text' : 'password'"
+                    variant="outlined"
+                    density="comfortable"
+                    :append-inner-icon="mostrarSenhaAtual ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="mostrarSenhaAtual = !mostrarSenhaAtual"
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <label class="text-body-2 text-grey-darken-2 mb-2 d-block">Nova Senha</label>
+                  <v-text-field
+                    v-model="formDados.senhaNova"
+                    placeholder="Mínimo 6 caracteres"
+                    :type="mostrarSenhaNova ? 'text' : 'password'"
+                    variant="outlined"
+                    density="comfortable"
+                    :append-inner-icon="mostrarSenhaNova ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="mostrarSenhaNova = !mostrarSenhaNova"
+                    :rules="[regras.senhaMinimaOpcional]"
+                    hide-details="auto"
+                  />
+                </v-col>
+              </template>
             </v-row>
           </v-form>
 
@@ -319,12 +367,17 @@ const salvando = ref(false)
 const excluindo = ref(false)
 const erroForm = ref(null)
 const mostrarSenha = ref(false)
+const mostrarSenhaAtual = ref(false)
+const mostrarSenhaNova = ref(false)
 
 const formDados = ref({
   nome: '',
   login: '',
   tipo: null,
-  senha: ''
+  senha: '',
+  matricula: '',
+  senhaAtual: '',
+  senhaNova: ''
 })
 
 const snackbar = ref({
@@ -336,7 +389,8 @@ const snackbar = ref({
 const regras = {
   obrigatorio: v => (v !== null && v !== undefined && v !== '') || 'Campo obrigatório',
   email: v => /.+@.+\..+/.test(v) || 'Email inválido',
-  senhaMinima: v => !v || v.length >= 6 || 'Senha deve ter no mínimo 6 caracteres'
+  senhaMinima: v => !v || v.length >= 6 || 'Senha deve ter no mínimo 6 caracteres',
+  senhaMinimaOpcional: v => !v || v.length === 0 || v.length >= 6 || 'Senha deve ter no mínimo 6 caracteres'
 }
 
 const usuariosFiltrados = computed(() => {
@@ -394,7 +448,10 @@ function abrirDialogCriar() {
     nome: '',
     login: '',
     tipo: null,
-    senha: ''
+    senha: '',
+    matricula: '',
+    senhaAtual: '',
+    senhaNova: ''
   }
   erroForm.value = null
   dialogUsuario.value = true
@@ -406,7 +463,10 @@ function abrirDialogEditar(usuario) {
     nome: usuario.nome,
     login: usuario.login,
     tipo: usuario.tipo,
-    senha: ''
+    senha: '',
+    matricula: usuario.matricula || '',
+    senhaAtual: '',
+    senhaNova: ''
   }
   erroForm.value = null
   dialogUsuario.value = true
@@ -419,7 +479,10 @@ function fecharDialog() {
     nome: '',
     login: '',
     tipo: null,
-    senha: ''
+    senha: '',
+    matricula: '',
+    senhaAtual: '',
+    senhaNova: ''
   }
   erroForm.value = null
 }
@@ -432,18 +495,35 @@ async function salvarUsuario() {
   erroForm.value = null
 
   try {
-    const dadosEnviar = {
-      nome: formDados.value.nome,
-      login: formDados.value.login,
-      tipo: tipoParaNumero[formDados.value.tipo],
-      senha: formDados.value.senha
-    }
-
     if (usuarioEditando.value) {
-      await usuarioService.atualizar(usuarioEditando.value.id, dadosEnviar)
+      // Para atualização, usar o schema AtualizarUsuarioRequest
+      const dadosAtualizar = {
+        nome: formDados.value.nome,
+        matricula: formDados.value.matricula || null
+      }
+
+      // Adicionar senhas apenas se foram preenchidas
+      if (formDados.value.senhaAtual && formDados.value.senhaNova) {
+        dadosAtualizar.senhaAtual = formDados.value.senhaAtual
+        dadosAtualizar.senhaNova = formDados.value.senhaNova
+      }
+
+      await usuarioService.atualizar(usuarioEditando.value.id, dadosAtualizar)
       mostrarSnackbar('Usuário atualizado com sucesso!', 'success')
     } else {
-      await usuarioService.cadastrar(dadosEnviar)
+      // Para criação, usar o schema CriarUsuarioRequest
+      const dadosCriar = {
+        nome: formDados.value.nome,
+        login: formDados.value.login,
+        senha: formDados.value.senha,
+        tipo: tipoParaNumero[formDados.value.tipo]
+      }
+
+      if (formDados.value.matricula) {
+        dadosCriar.matricula = formDados.value.matricula
+      }
+
+      await usuarioService.cadastrar(dadosCriar)
       mostrarSnackbar('Usuário criado com sucesso!', 'success')
     }
     

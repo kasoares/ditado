@@ -33,19 +33,51 @@
     <v-list density="comfortable" nav class="px-3">
       <v-list-item
         prepend-icon="mdi-home"
-        title="Home"
+        title="Início"
         value="home"
-        to="/"
+        :to="rotaInicial"
         class="menu-item mb-2 rounded-lg"
       ></v-list-item>
 
-      <v-list-item
-        prepend-icon="mdi-account-multiple"
-        title="Usuários"
-        value="usuarios"
-        to="/usuarios"
-        class="menu-item mb-2 rounded-lg"
-      ></v-list-item>
+      <!-- Menu Administrador -->
+      <template v-if="authStore.ehAdministrador">
+        <v-list-item
+          prepend-icon="mdi-account-multiple"
+          title="Usuários"
+          value="usuarios"
+          to="/usuarios"
+          class="menu-item mb-2 rounded-lg"
+        ></v-list-item>
+      </template>
+
+      <!-- Menu Professor -->
+      <template v-if="authStore.ehProfessor">
+        <v-list-item
+          prepend-icon="mdi-file-document"
+          title="Textos"
+          value="textos"
+          to="/cadastro-ditado"
+          class="menu-item mb-2 rounded-lg"
+        ></v-list-item>
+
+        <v-list-item
+          prepend-icon="mdi-school"
+          title="Turmas"
+          value="turmas"
+          class="menu-item mb-2 rounded-lg"
+          @click="funcionalidadeEmBreve"
+        ></v-list-item>
+
+        <v-list-item
+          prepend-icon="mdi-chart-line"
+          title="Relatórios"
+          value="relatorios"
+          class="menu-item mb-2 rounded-lg"
+          @click="funcionalidadeEmBreve"
+        ></v-list-item>
+      </template>
+
+      <v-divider class="border-opacity-25 my-3"></v-divider>
 
       <v-list-group value="perfil">
         <template v-slot:activator="{ props }">
@@ -73,6 +105,11 @@
         class="menu-item mb-2 rounded-lg"
       ></v-list-item>
     </v-list>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="snackbar" color="info" :timeout="2000">
+      Funcionalidade em desenvolvimento
+    </v-snackbar>
 
     <!-- Botão toggle -->
     <template v-slot:append>
@@ -107,6 +144,14 @@ const { mobile } = useDisplay()
 
 const drawerLocal = ref(props.drawer)
 const rail = ref(false)
+const snackbar = ref(false)
+
+const rotaInicial = computed(() => {
+  if (authStore.ehAdministrador) return '/admin'
+  if (authStore.ehProfessor) return '/professor'
+  if (authStore.ehAluno) return '/aluno'
+  return '/'
+})
 
 watch(() => props.drawer, (valor) => {
   drawerLocal.value = valor
@@ -126,6 +171,10 @@ const iniciais = computed(() => {
   const nome = authStore.usuario?.nome || 'AT'
   return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
 })
+
+function funcionalidadeEmBreve() {
+  snackbar.value = true
+}
 
 function sair() {
   authStore.logout()

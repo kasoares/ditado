@@ -156,7 +156,17 @@ async function fazerLogin() {
   
   try {
     await authStore.login(login.value, senha.value)
-    router.push('/')
+    
+    // Redirecionar baseado no tipo de usuário
+    if (authStore.ehAdministrador) {
+      router.push('/admin')
+    } else if (authStore.ehProfessor) {
+      router.push('/professor')
+    } else if (authStore.ehAluno) {
+      router.push('/aluno')
+    } else {
+      router.push('/')
+    }
   } catch (e) {
     erro.value = 'Login ou senha inválidos'
   } finally {
