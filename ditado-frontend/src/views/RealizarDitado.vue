@@ -72,21 +72,11 @@
             </div>
             <div class="d-flex align-center gap-2">
               <v-btn
-                color="primary"
-                variant="flat"
-                prepend-icon="mdi-play"
-                class="text-none"
-                @click="tocarAudio"
-                :disabled="!audioBase64"
-              >
-                Tocar
-              </v-btn>
-              <v-btn
                 color="success"
                 variant="flat"
                 prepend-icon="mdi-refresh"
                 class="text-none"
-                @click="repetirAudio"
+                @click="tocarAudio"
                 :disabled="!audioBase64"
               >
                 Repetir
@@ -294,10 +284,6 @@ function tocarAudio() {
     console.error('Player ou áudio não disponível')
     mostrarSnackbar('Áudio não disponível', 'error')
   }
-}
-
-function repetirAudio() {
-  tocarAudio()
 }
 
 function verificarPreenchimento() {

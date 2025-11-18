@@ -5,9 +5,9 @@
       <v-card-text class="pa-6">
         <div class="d-flex align-center justify-space-between">
           <div>
-            <h1 class="text-h4 font-weight-bold mb-2">Cadastro de Textos</h1>
+            <h1 class="text-h4 font-weight-bold mb-2">{{ editando ? 'Editar Ditado' : 'Cadastro de Ditados' }}</h1>
             <p class="text-body-1 text-grey-darken-1">
-              Crie e organize textos para futuras sessões de ditado.
+              {{ editando ? 'Atualize os dados do ditado' : 'Crie e organize ditados para futuras sessões.' }}
             </p>
           </div>
           <v-btn
@@ -34,7 +34,7 @@
               <v-card elevation="0" class="border">
                 <v-card-title class="bg-grey-lighten-5 pa-4">
                   <v-icon class="mr-2">mdi-text</v-icon>
-                  Detalhes do Texto
+                  Detalhes do Ditado
                 </v-card-title>
                 <v-card-text class="pa-6">
                   <!-- Título -->
@@ -103,60 +103,6 @@
                   Áudio
                 </v-card-title>
                 <v-card-text class="pa-6">
-                  <!-- Upload de áudio -->
-                  <div class="mb-6">
-                    <v-card
-                      elevation="0"
-                      class="border-dashed pa-8 text-center"
-                      @click="selecionarArquivo"
-                      style="cursor: pointer; border: 2px dashed #ccc;"
-                    >
-                      <v-icon size="64" color="primary" class="mb-4">
-                        mdi-file-music-outline
-                      </v-icon>
-                      <h3 class="text-h6 font-weight-bold mb-2">Upload de áudio (MP3/WAV)</h3>
-                      <p class="text-body-2 text-grey-darken-1 mb-4">
-                        {{ nomeArquivo || 'Clique para selecionar ou arraste o arquivo aqui' }}
-                      </p>
-                      <v-btn
-                        color="primary"
-                        variant="flat"
-                        prepend-icon="mdi-upload"
-                        class="text-none"
-                        @click.stop="selecionarArquivo"
-                      >
-                        Enviar
-                      </v-btn>
-                    </v-card>
-                    <input
-                      ref="inputArquivo"
-                      type="file"
-                      accept="audio/mp3,audio/wav,audio/mpeg"
-                      style="display: none"
-                      @change="handleFileUpload"
-                    />
-                  </div>
-
-                  <!-- Preview do áudio -->
-                  <div v-if="audioBase64" class="mb-6">
-                    <v-alert type="success" variant="tonal" class="mb-4">
-                      <div class="d-flex align-center justify-space-between">
-                        <span>Áudio carregado com sucesso!</span>
-                        <v-btn
-                          icon="mdi-close"
-                          size="small"
-                          variant="text"
-                          @click="removerAudio"
-                        />
-                      </div>
-                    </v-alert>
-                    <audio controls class="w-100">
-                      <source :src="audioBase64" :type="tipoAudio">
-                    </audio>
-                  </div>
-
-                  <v-divider class="my-6"></v-divider>
-
                   <!-- Gravação direta -->
                   <div>
                     <h3 class="text-h6 font-weight-bold mb-4 d-flex align-center">
@@ -248,7 +194,7 @@
           :loading="salvando"
           @click="salvarDitado"
         >
-          Salvar Texto
+          {{ editando ? 'Atualizar Ditado' : 'Salvar Ditado' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -261,15 +207,18 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onUnmounted, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ditadoService } from '@/services/ditadoService'
 
 const router = useRouter()
+const route = useRoute()
 
 const formDitado = ref(null)
-const inputArquivo = ref(null)
 const audioGravadoPlayer = ref(null)
+
+const ditadoId = computed(() => route.params.id)
+const editando = computed(() => !!ditadoId.value)
 
 const formDados = ref({
   titulo: '',
@@ -277,10 +226,10 @@ const formDados = ref({
   textoComMarcacoes: ''
 })
 
-const nomeArquivo = ref('')
-const audioBase64 = ref(null)
-const tipoAudio = ref('')
+let ditadoEmEdicao = null
+
 const salvando = ref(false)
+const carregando = ref(false)
 const erroForm = ref(null)
 
 // Gravação
@@ -301,39 +250,61 @@ const regras = {
   obrigatorio: v => (v !== null && v !== undefined && v !== '') || 'Campo obrigatório'
 }
 
-function selecionarArquivo() {
-  inputArquivo.value.click()
+onMounted(async () => {
+  console.log('CadastroDitado mounted, editando:', editando.value, 'ditadoId:', ditadoId.value)
+  if (editando.value) {
+    await carregarDitado()
+  }
+})
+
+async function carregarDitado() {
+  carregando.value = true
+  erroForm.value = null
+  try {
+    console.log('Carregando ditado com ID:', ditadoId.value)
+    
+    // Primeira tentativa: buscar do backend
+    try {
+      const ditado = await ditadoService.buscarPorId(ditadoId.value)
+      console.log('Ditado carregado do backend:', ditado)
+      preencherFormulario(ditado)
+    } catch (erro) {
+      // Se o backend retornar 404, tentar carregar a lista completa e procurar o ditado
+      console.log('Falha ao carregar do backend, tentando carregar lista completa...')
+      if (erro.response?.status === 404) {
+        const todosDitados = await ditadoService.listarTodos()
+        const ditadoEncontrado = todosDitados.find(d => d.id == ditadoId.value)
+        
+        if (ditadoEncontrado) {
+          console.log('Ditado encontrado na lista:', ditadoEncontrado)
+          ditadoEmEdicao = ditadoEncontrado
+          preencherFormulario(ditadoEncontrado)
+        } else {
+          throw new Error('Ditado não encontrado na lista')
+        }
+      } else {
+        throw erro
+      }
+    }
+  } catch (erro) {
+    console.error('Erro ao carregar ditado:', erro)
+    const mensagemErro = erro.response?.data?.message || erro.message || 'Erro ao carregar ditado'
+    erroForm.value = mensagemErro
+    mostrarSnackbar(mensagemErro, 'error')
+  } finally {
+    carregando.value = false
+  }
 }
 
-function handleFileUpload(event) {
-  const file = event.target.files[0]
-  if (!file) return
-
-  // Validar tipo de arquivo
-  if (!file.type.match('audio.*')) {
-    mostrarSnackbar('Por favor, selecione um arquivo de áudio válido', 'error')
-    return
+function preencherFormulario(ditado) {
+  if (!ditado) {
+    throw new Error('Ditado não encontrado')
   }
-
-  nomeArquivo.value = file.name
-  tipoAudio.value = file.type
-
-  // Converter para base64
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    audioBase64.value = e.target.result
-    // Limpar gravação se houver
-    audioGravado.value = null
-  }
-  reader.readAsDataURL(file)
-}
-
-function removerAudio() {
-  audioBase64.value = null
-  nomeArquivo.value = ''
-  tipoAudio.value = ''
-  if (inputArquivo.value) {
-    inputArquivo.value.value = ''
+  ditadoEmEdicao = ditado
+  formDados.value = {
+    titulo: ditado.titulo || '',
+    descricao: ditado.descricao || '',
+    textoComMarcacoes: ditado.textoComMarcacoes || ''
   }
 }
 
@@ -352,8 +323,6 @@ async function iniciarGravacao() {
       const reader = new FileReader()
       reader.onload = () => {
         audioGravado.value = reader.result
-        // Limpar upload se houver
-        removerAudio()
       }
       reader.readAsDataURL(blob)
 
@@ -402,9 +371,9 @@ async function salvarDitado() {
     return
   }
 
-  // Validar se há áudio
-  if (!audioBase64.value && !audioGravado.value) {
-    mostrarSnackbar('Por favor, adicione um áudio (upload ou gravação)', 'warning')
+  // Validar se há áudio apenas ao criar novo ditado
+  if (!editando.value && !audioGravado.value) {
+    mostrarSnackbar('Por favor, grave um áudio', 'warning')
     return
   }
 
@@ -412,21 +381,25 @@ async function salvarDitado() {
   erroForm.value = null
 
   try {
-    // Preparar dados para envio
-    const audioParaEnviar = audioGravado.value || audioBase64.value
-    
-    // Extrair apenas a string base64 (remover o prefixo data:audio/...)
-    const base64Audio = audioParaEnviar.split(',')[1]
-
     const dados = {
       titulo: formDados.value.titulo,
       descricao: formDados.value.descricao || '',
-      textoComMarcacoes: formDados.value.textoComMarcacoes,
-      audioBase64: base64Audio
+      textoComMarcacoes: formDados.value.textoComMarcacoes
     }
 
-    await ditadoService.criar(dados)
-    mostrarSnackbar('Ditado cadastrado com sucesso!', 'success')
+    // Adicionar áudio da gravação
+    if (audioGravado.value) {
+      const base64Audio = audioGravado.value.split(',')[1]
+      dados.audioBase64 = base64Audio
+    }
+
+    if (editando.value) {
+      await ditadoService.atualizar(ditadoId.value, dados)
+      mostrarSnackbar('Ditado atualizado com sucesso!', 'success')
+    } else {
+      await ditadoService.criar(dados)
+      mostrarSnackbar('Ditado cadastrado com sucesso!', 'success')
+    }
     
     setTimeout(() => {
       voltarParaLista()

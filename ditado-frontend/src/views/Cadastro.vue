@@ -52,18 +52,32 @@
               />
             </div>
 
-            <!-- Campo Email -->
+            <!-- Campo Email/Login -->
             <div class="mb-4">
               <label class="text-body-2 text-grey-darken-2 mb-2 d-block">
-                Email
+                Email (Login)
               </label>
               <v-text-field
-                v-model="dados.email"
+                v-model="dados.login"
                 placeholder="seu@email.com"
                 type="email"
                 variant="outlined"
                 density="comfortable"
                 :rules="[regras.obrigatorio, regras.email]"
+                hide-details="auto"
+              />
+            </div>
+
+            <!-- Campo Matrícula (Opcional) -->
+            <div class="mb-4">
+              <label class="text-body-2 text-grey-darken-2 mb-2 d-block">
+                Matrícula (Opcional)
+              </label>
+              <v-text-field
+                v-model="dados.matricula"
+                placeholder="Digite sua matrícula (se tiver)"
+                variant="outlined"
+                density="comfortable"
                 hide-details="auto"
               />
             </div>
@@ -181,8 +195,9 @@ const router = useRouter()
 
 const dados = ref({
   nome: '',
-  email: '',
-  senha: ''
+  login: '', // Mudado de email para login
+  senha: '',
+  matricula: '' // Campo novo
 })
 
 const confirmarSenha = ref('')
@@ -210,14 +225,26 @@ async function cadastrar() {
   sucesso.value = null
   
   try {
-    await usuarioService.cadastrar(dados.value)
-    sucesso.value = 'Cadastro realizado com sucesso! Redirecionando...'
+    await usuarioService.solicitarAcesso({
+      nome: dados.value.nome,
+      login: dados.value.login,
+      senha: dados.value.senha,
+      matricula: dados.value.matricula || null
+    })
+    sucesso.value = 'Solicitação enviada com sucesso! Aguarde aprovação. Redirecionando...'
     
     setTimeout(() => {
       router.push('/login')
-    }, 2000)
+    }, 2500)
   } catch (e) {
-    erro.value = e.response?.data?.message || 'Erro ao cadastrar usuário'
+    // Tratar erros de validação da API
+    if (e.response?.data?.errors) {
+      const erros = e.response.data.errors
+      const mensagensErro = Object.values(erros).flat().join(', ')
+      erro.value = mensagensErro
+    } else {
+      erro.value = e.response?.data?.message || e.response?.data?.title || 'Erro ao solicitar acesso'
+    }
   } finally {
     carregando.value = false
   }

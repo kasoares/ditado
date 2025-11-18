@@ -43,10 +43,40 @@ const routes = [
         meta: { requerTipo: 'Professor' }
       },
       {
+        path: '/ditados',
+        name: 'Ditados',
+        component: () => import('@/views/Ditados.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
         path: '/cadastro-ditado',
         name: 'CadastroDitado',
         component: () => import('@/views/CadastroDitado.vue'),
-        meta: { requerTipo: 'Professor' }
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/editar-ditado/:id',
+        name: 'EditarDitado',
+        component: () => import('@/views/CadastroDitado.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/turmas',
+        name: 'Turmas',
+        component: () => import('@/views/Turmas.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/inseriraluno/:turmaId',
+        name: 'InsertAluno',
+        component: () => import('@/views/InsertAluno.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/minhas-turmas',
+        name: 'MinhasTurmas',
+        component: () => import('@/views/MinhasTurmas.vue'),
+        meta: { requerTipo: 'Aluno' }
       },
       {
         path: '/aluno',
@@ -102,16 +132,25 @@ router.beforeEach((to, from, next) => {
     } else {
       next('/')
     }
-  } else if (to.meta.requerTipo && to.meta.requerTipo !== authStore.tipoUsuario) {
+  } else if (to.meta.requerTipo) {
     // Verificar se o usuário tem permissão para acessar a rota
-    if (authStore.ehAdministrador) {
-      next('/admin')
-    } else if (authStore.ehProfessor) {
-      next('/professor')
-    } else if (authStore.ehAluno) {
-      next('/aluno')
+    const tiposPermitidos = Array.isArray(to.meta.requerTipo) 
+      ? to.meta.requerTipo 
+      : [to.meta.requerTipo]
+    
+    if (!tiposPermitidos.includes(authStore.tipoUsuario)) {
+      // Usuário não tem permissão, redireciona para o painel correto
+      if (authStore.ehAdministrador) {
+        next('/admin')
+      } else if (authStore.ehProfessor) {
+        next('/professor')
+      } else if (authStore.ehAluno) {
+        next('/aluno')
+      } else {
+        next('/login')
+      }
     } else {
-      next('/login')
+      next()
     }
   } else {
     next()

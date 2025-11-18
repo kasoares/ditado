@@ -168,7 +168,16 @@ async function fazerLogin() {
       router.push('/')
     }
   } catch (e) {
-    erro.value = 'Login ou senha inválidos'
+    // Tratar erros específicos da API
+    if (e.response?.status === 401) {
+      erro.value = 'Email ou senha inválidos, ou acesso não foi aprovado'
+    } else if (e.response?.data?.message) {
+      erro.value = e.response.data.message
+    } else if (e.response?.data?.title) {
+      erro.value = e.response.data.title
+    } else {
+      erro.value = 'Erro ao fazer login. Tente novamente.'
+    }
   } finally {
     carregando.value = false
   }

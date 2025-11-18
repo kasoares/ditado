@@ -12,8 +12,6 @@
     <v-spacer></v-spacer>
 
     <div class="d-flex align-center gap-3 mr-4">
-      <span class="text-body-2 text-grey-darken-1">Bem-vindo</span>
-      
       <v-btn
         variant="outlined"
         color="primary"
@@ -29,16 +27,22 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['toggle-drawer'])
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 const tituloPagina = computed(() => {
   const titulos = {
     'Home': 'Home',
     'Perfil': 'Editar Perfil',
-    'Usuarios': 'Gerenciar Usuários'
+    'Usuarios': 'Gerenciar Usuários',
+    'Ditados': 'Ditados',
+    'Turmas': 'Turmas',
+    'MinhasTurmas': 'Minhas Turmas',
+    'CadastroDitado': 'Cadastro de Ditado'
   }
   return titulos[route.name] || 'Sistema de Gestão'
 })

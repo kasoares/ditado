@@ -24,113 +24,227 @@
       </v-card-text>
     </v-card>
 
-    <!-- Filtros e busca -->
+    <!-- Abas: Usuários e Solicitações Pendentes -->
     <v-card class="mb-4 mb-md-6" elevation="1">
-      <v-card-text class="pa-4 pa-md-6">
-        <v-row>
-          <v-col cols="12" sm="6" md="5">
-            <v-text-field
-              v-model="filtros.busca"
-              label="Buscar"
-              placeholder="Nome, email ou ID"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              hide-details
-            />
-          </v-col>
-          <v-col cols="12" sm="6" md="4">
-            <v-select
-              v-model="filtros.tipo"
-              label="Tipo de usuário"
-              :items="tiposUsuario"
-              item-title="title"
-              item-value="value"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <!-- Tabela de usuários -->
-    <v-card elevation="1">
-      <v-card-title class="pa-4 pa-md-6 d-flex align-center border-b">
-        <v-icon class="mr-2 mr-md-3" color="grey-darken-2">mdi-account-multiple</v-icon>
-        <span class="text-body-1 text-md-h6 font-weight-bold">Lista de Usuários</span>
-        <v-spacer></v-spacer>
-        <v-chip color="primary" variant="flat">
-          {{ usuariosFiltrados.length }} usuários
-        </v-chip>
-      </v-card-title>
+      <v-tabs v-model="abaSelecionada" color="primary">
+        <v-tab value="usuarios">
+          <v-icon start>mdi-account-multiple</v-icon>
+          Usuários
+        </v-tab>
+        <v-tab value="solicitacoes">
+          <v-icon start>mdi-bell-ring</v-icon>
+          Solicitações Pendentes
+          <v-chip v-if="solicitacoesPendentes.length > 0" color="error" size="small" class="ml-2">
+            {{ solicitacoesPendentes.length }}
+          </v-chip>
+        </v-tab>
+      </v-tabs>
 
       <v-divider></v-divider>
 
-      <!-- Loading -->
-      <div v-if="carregando" class="text-center pa-12">
-        <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-        <p class="text-grey mt-4">Carregando usuários...</p>
-      </div>
+      <!-- Conteúdo das abas -->
+      <v-window v-model="abaSelecionada">
+        <!-- Aba Usuários -->
+        <v-window-item value="usuarios">
+          <!-- Filtros e busca -->
+          <v-card elevation="0" class="mb-4">
+            <v-card-text class="pa-4 pa-md-6">
+              <v-row>
+                <v-col cols="12" sm="6" md="6">
+                  <v-text-field
+                    v-model="filtros.busca"
+                    label="Buscar"
+                    placeholder="Nome, email ou ID"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-magnify"
+                    clearable
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="12" sm="6" md="6">
+                  <v-select
+                    v-model="filtros.tipo"
+                    label="Tipo de usuário"
+                    :items="tiposUsuario"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    hide-details
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
 
-      <!-- Lista vazia -->
-      <div v-else-if="usuariosFiltrados.length === 0" class="text-center pa-12">
-        <v-icon size="64" color="grey-lighten-1">mdi-account-off-outline</v-icon>
-        <p class="text-body-1 text-grey mt-4">Nenhum usuário encontrado</p>
-      </div>
-
-      <!-- Tabela -->
-      <v-table v-else>
-        <thead>
-          <tr>
-            <th class="text-left font-weight-bold">ID</th>
-            <th class="text-left font-weight-bold">Nome</th>
-            <th class="text-left font-weight-bold d-none d-sm-table-cell">Login</th>
-            <th class="text-left font-weight-bold d-none d-md-table-cell">Tipo</th>
-            <th class="text-center font-weight-bold">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
-            <td>{{ usuario.id }}</td>
-            <td>
-              <div class="d-flex align-center">
-                <v-avatar color="primary" size="32" class="mr-2">
-                  <span class="text-caption">{{ obterIniciais(usuario.nome) }}</span>
-                </v-avatar>
-                <span>{{ usuario.nome }}</span>
-              </div>
-            </td>
-            <td class="d-none d-sm-table-cell">{{ usuario.login }}</td>
-            <td class="d-none d-md-table-cell">
-              <v-chip :color="obterCorTipo(usuario.tipo)" size="small" variant="flat">
-                {{ usuario.tipo }}
+          <!-- Tabela de usuários -->
+          <v-card elevation="0">
+            <v-card-title class="pa-4 pa-md-6 d-flex align-center border-b">
+              <v-icon class="mr-2 mr-md-3" color="grey-darken-2">mdi-account-multiple</v-icon>
+              <span class="text-body-1 text-md-h6 font-weight-bold">Lista de Usuários</span>
+              <v-spacer></v-spacer>
+              <v-chip color="primary" variant="flat">
+                {{ usuariosFiltrados.length }} usuários
               </v-chip>
-            </td>
-            <td>
-              <div class="d-flex justify-center gap-1">
-                <v-btn
-                  icon="mdi-pencil"
-                  size="small"
-                  variant="text"
-                  color="primary"
-                  @click="abrirDialogEditar(usuario)"
-                />
-                <v-btn
-                  icon="mdi-delete"
-                  size="small"
-                  variant="text"
-                  color="error"
-                  @click="confirmarExclusao(usuario)"
-                />
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+            </v-card-title>
+
+            <v-divider></v-divider>
+
+            <!-- Loading -->
+            <div v-if="carregando" class="text-center pa-12">
+              <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+              <p class="text-grey mt-4">Carregando usuários...</p>
+            </div>
+
+            <!-- Lista vazia -->
+            <div v-else-if="usuariosFiltrados.length === 0" class="text-center pa-12">
+              <v-icon size="64" color="grey-lighten-1">mdi-account-off-outline</v-icon>
+              <p class="text-body-1 text-grey mt-4">Nenhum usuário encontrado</p>
+            </div>
+
+            <!-- Tabela -->
+            <v-table v-else>
+              <thead>
+                <tr>
+                  <th class="text-left font-weight-bold">ID</th>
+                  <th class="text-left font-weight-bold">Nome</th>
+                  <th class="text-left font-weight-bold d-none d-sm-table-cell">Login</th>
+                  <th class="text-left font-weight-bold d-none d-md-table-cell">Tipo</th>
+                  <th class="text-center font-weight-bold">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
+                  <td>{{ usuario.id }}</td>
+                  <td>
+                    <div class="d-flex align-center">
+                      <v-avatar color="primary" size="32" class="mr-2">
+                        <span class="text-caption">{{ obterIniciais(usuario.nome) }}</span>
+                      </v-avatar>
+                      <span>{{ usuario.nome }}</span>
+                    </div>
+                  </td>
+                  <td class="d-none d-sm-table-cell">{{ usuario.login }}</td>
+                  <td class="d-none d-md-table-cell">
+                    <v-chip :color="obterCorTipo(usuario.tipo)" size="small" variant="flat">
+                      {{ usuario.tipo }}
+                    </v-chip>
+                  </td>
+                  <td>
+                    <div class="d-flex justify-center gap-1">
+                      <v-btn
+                        icon="mdi-school-plus"
+                        size="small"
+                        variant="text"
+                        color="success"
+                        title="Adicionar à turma"
+                        @click="abrirDialogAdicionarTurma(usuario)"
+                      />
+                      <v-btn
+                        icon="mdi-pencil"
+                        size="small"
+                        variant="text"
+                        color="primary"
+                        @click="abrirDialogEditar(usuario)"
+                      />
+                      <v-btn
+                        icon="mdi-delete"
+                        size="small"
+                        variant="text"
+                        color="error"
+                        @click="confirmarExclusao(usuario)"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card>
+        </v-window-item>
+
+        <!-- Aba Solicitações Pendentes -->
+        <v-window-item value="solicitacoes">
+          <!-- Loading -->
+          <div v-if="carregandoSolicitacoes" class="text-center pa-12">
+            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+            <p class="text-grey mt-4">Carregando solicitações...</p>
+          </div>
+
+          <!-- Nenhuma solicitação -->
+          <div v-else-if="solicitacoesPendentes.length === 0" class="text-center pa-12">
+            <v-icon size="64" color="grey-lighten-1">mdi-bell-outline</v-icon>
+            <p class="text-body-1 text-grey mt-4">Nenhuma solicitação pendente</p>
+          </div>
+
+          <!-- Lista de solicitações -->
+          <div v-else class="pa-4">
+            <v-row>
+              <v-col v-for="solicitacao in solicitacoesPendentes" :key="solicitacao.id" cols="12">
+                <v-card class="mb-2">
+                  <v-card-text class="pa-4">
+                    <div class="d-flex justify-space-between align-center">
+                      <div>
+                        <div class="d-flex align-center mb-2">
+                          <v-avatar color="warning" size="40" class="mr-3">
+                            <span class="text-caption">{{ obterIniciais(solicitacao.nome) }}</span>
+                          </v-avatar>
+                          <div>
+                            <p class="text-body-2 font-weight-bold mb-1">{{ solicitacao.nome }}</p>
+                            <p class="text-caption text-grey">{{ solicitacao.login }}</p>
+                          </div>
+                        </div>
+                        <p v-if="solicitacao.matricula" class="text-caption text-grey mt-2">
+                          <strong>Matrícula:</strong> {{ solicitacao.matricula }}
+                        </p>
+                        <p class="text-caption text-grey mt-1">
+                          <strong>Solicitado em:</strong> {{ formatarData(solicitacao.dataCriacao) }}
+                        </p>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <v-menu>
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              color="success"
+                              variant="flat"
+                              size="small"
+                              prepend-icon="mdi-check"
+                              v-bind="props"
+                              class="text-none"
+                            >
+                              Aprovar
+                            </v-btn>
+                          </template>
+                          <v-list density="compact">
+                            <v-list-item
+                              v-for="tipo in ['Aluno', 'Professor']"
+                              :key="tipo"
+                              @click="aprovarSolicitacao(solicitacao, tipo)"
+                            >
+                              <v-list-item-title>Como {{ tipo }}</v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu>
+                        <v-btn
+                          color="error"
+                          variant="outlined"
+                          size="small"
+                          prepend-icon="mdi-close"
+                          @click="rejeitarSolicitacao(solicitacao)"
+                          class="text-none"
+                        >
+                          Rejeitar
+                        </v-btn>
+                      </div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+        </v-window-item>
+      </v-window>
     </v-card>
 
     <!-- Dialog Criar/Editar Usuário -->
@@ -328,6 +442,50 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog Adicionar à Turma -->
+    <v-dialog v-model="dialogAdicionarTurma" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="pa-4 bg-success text-white">
+          <span class="text-body-1 text-md-h6 font-weight-bold">
+            Adicionar {{ usuarioParaAdicionarTurma?.nome }} a uma Turma
+          </span>
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-select
+            v-model="turmaSelecionadaParaAdicionar"
+            :items="turmasDisponiveis"
+            item-title="nome"
+            item-value="id"
+            label="Selecione uma turma"
+            variant="outlined"
+            density="comfortable"
+            :rules="[regras.obrigatorio]"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="grey"
+            variant="text"
+            class="text-none"
+            @click="dialogAdicionarTurma = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="success"
+            variant="flat"
+            class="text-none"
+            :loading="adicionandoTurma"
+            :disabled="!turmaSelecionadaParaAdicionar"
+            @click="confirmarAdicionarTurma"
+          >
+            Adicionar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar de sucesso -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
@@ -338,9 +496,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { usuarioService } from '@/services/usuarioService'
+import { turmaService } from '@/services/turmaService'
 
 const usuarios = ref([])
+const solicitacoesPendentes = ref([])
 const carregando = ref(false)
+const carregandoSolicitacoes = ref(false)
+const abaSelecionada = ref('usuarios')
 const filtros = ref({
   busca: '',
   tipo: null
@@ -360,11 +522,16 @@ const tipoParaNumero = {
 
 const dialogUsuario = ref(false)
 const dialogExclusao = ref(false)
+const dialogAdicionarTurma = ref(false)
 const usuarioEditando = ref(null)
 const usuarioParaExcluir = ref(null)
+const usuarioParaAdicionarTurma = ref(null)
+const turmasDisponiveis = ref([])
+const turmaSelecionadaParaAdicionar = ref(null)
 const formUsuario = ref(null)
 const salvando = ref(false)
 const excluindo = ref(false)
+const adicionandoTurma = ref(false)
 const erroForm = ref(null)
 const mostrarSenha = ref(false)
 const mostrarSenhaAtual = ref(false)
@@ -414,6 +581,7 @@ const usuariosFiltrados = computed(() => {
 
 onMounted(() => {
   buscarUsuarios()
+  carregarSolicitacoesPendentes()
 })
 
 async function buscarUsuarios() {
@@ -523,7 +691,7 @@ async function salvarUsuario() {
         dadosCriar.matricula = formDados.value.matricula
       }
 
-      await usuarioService.cadastrar(dadosCriar)
+      await usuarioService.criar(dadosCriar)
       mostrarSnackbar('Usuário criado com sucesso!', 'success')
     }
     
@@ -570,6 +738,115 @@ function mostrarSnackbar(mensagem, cor = 'success') {
     mensagem,
     color: cor
   }
+}
+
+async function carregarSolicitacoesPendentes() {
+  carregandoSolicitacoes.value = true
+  try {
+    const dados = await usuarioService.listarSolicitacoesPendentes()
+    solicitacoesPendentes.value = dados
+  } catch (erro) {
+    console.error('Erro ao carregar solicitações:', erro)
+    mostrarSnackbar('Erro ao carregar solicitações', 'error')
+  } finally {
+    carregandoSolicitacoes.value = false
+  }
+}
+
+async function abrirDialogAdicionarTurma(usuario) {
+  usuarioParaAdicionarTurma.value = usuario
+  turmaSelecionadaParaAdicionar.value = null
+  try {
+    turmasDisponiveis.value = await turmaService.listarTodas()
+  } catch (erro) {
+    console.error('Erro ao carregar turmas:', erro)
+    mostrarSnackbar('Erro ao carregar turmas', 'error')
+    return
+  }
+  dialogAdicionarTurma.value = true
+}
+
+async function confirmarAdicionarTurma() {
+  if (!turmaSelecionadaParaAdicionar.value) {
+    mostrarSnackbar('Selecione uma turma', 'warning')
+    return
+  }
+
+  adicionandoTurma.value = true
+  try {
+    const turma = turmasDisponiveis.value.find(t => t.id === turmaSelecionadaParaAdicionar.value)
+    const alunosIds = turma.alunosIds || []
+    
+    // Adicionar o usuário à turma se for aluno
+    if (usuarioParaAdicionarTurma.value.tipo === 'Aluno') {
+      if (!alunosIds.includes(usuarioParaAdicionarTurma.value.id)) {
+        alunosIds.push(usuarioParaAdicionarTurma.value.id)
+      }
+    }
+    
+    await turmaService.atualizar(turmaSelecionadaParaAdicionar.value, { alunosIds })
+    mostrarSnackbar(`${usuarioParaAdicionarTurma.value.nome} adicionado à turma!`, 'success')
+    dialogAdicionarTurma.value = false
+  } catch (erro) {
+    console.error('Erro ao adicionar usuário à turma:', erro)
+    mostrarSnackbar('Erro ao adicionar à turma', 'error')
+  } finally {
+    adicionandoTurma.value = false
+  }
+}
+
+async function aprovarSolicitacao(solicitacao, tipo) {
+  try {
+    const tipoParaEnum = {
+      'Aluno': 3,
+      'Professor': 2
+    }
+    
+    await usuarioService.aprovarAcesso(solicitacao.id, tipoParaEnum[tipo])
+    mostrarSnackbar(`Solicitação aprovada como ${tipo}!`, 'success')
+    
+    // Se for aluno, perguntar se quer adicionar a uma turma
+    if (tipo === 'Aluno') {
+      await new Promise(resolve => {
+        setTimeout(() => {
+          const dialogConfirm = confirm('Deseja adicionar este aluno a uma turma?')
+          if (dialogConfirm) {
+            abrirDialogAdicionarTurma(solicitacao)
+          }
+          resolve()
+        }, 500)
+      })
+    }
+    
+    carregarSolicitacoesPendentes()
+    buscarUsuarios()
+  } catch (erro) {
+    console.error('Erro ao aprovar solicitação:', erro)
+    mostrarSnackbar('Erro ao aprovar solicitação', 'error')
+  }
+}
+
+async function rejeitarSolicitacao(solicitacao) {
+  if (confirm('Tem certeza que deseja rejeitar esta solicitação?')) {
+    try {
+      // Usar deletar para rejeitar (remover a solicitação)
+      await usuarioService.deletar(solicitacao.id)
+      mostrarSnackbar('Solicitação rejeitada!', 'success')
+      carregarSolicitacoesPendentes()
+    } catch (erro) {
+      console.error('Erro ao rejeitar solicitação:', erro)
+      mostrarSnackbar('Erro ao rejeitar solicitação', 'error')
+    }
+  }
+}
+
+function formatarData(data) {
+  if (!data) return '-'
+  return new Date(data).toLocaleDateString('pt-BR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
 }
 </script>
 

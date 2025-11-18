@@ -100,16 +100,62 @@
       </v-col>
 
       <v-col cols="12" md="6">
-        <v-card elevation="1" class="h-100 action-card" hover @click="irParaPerfil">
+        <v-card elevation="1" class="h-100 action-card" hover @click="irParaTurmas">
           <v-card-text class="pa-6">
             <div class="d-flex align-center">
               <v-avatar color="success" size="64" class="mr-4">
+                <v-icon size="32" color="white">mdi-school</v-icon>
+              </v-avatar>
+              <div>
+                <h3 class="text-h6 font-weight-bold mb-1">Gerenciar Turmas</h3>
+                <p class="text-body-2 text-grey-darken-1 mb-0">
+                  Crie, edite e organize turmas e seus ditados
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6">
+        <v-card elevation="1" class="h-100 action-card" hover @click="irParaPerfil">
+          <v-card-text class="pa-6">
+            <div class="d-flex align-center">
+              <v-avatar color="info" size="64" class="mr-4">
                 <v-icon size="32" color="white">mdi-account-cog</v-icon>
               </v-avatar>
               <div>
                 <h3 class="text-h6 font-weight-bold mb-1">Meu Perfil</h3>
                 <p class="text-body-2 text-grey-darken-1 mb-0">
                   Visualize e edite suas informações pessoais
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6">
+        <v-card elevation="1" class="h-100 action-card" hover @click="irParaDitados" :class="{ 'action-card-destaque': temSolicitacoesPendentes }">
+          <v-card-text class="pa-6">
+            <div class="d-flex align-center">
+              <v-badge
+                v-if="temSolicitacoesPendentes"
+                color="error"
+                floating
+                :content="totalSolicitacoesPendentes"
+              >
+                <v-avatar color="warning" size="64" class="mr-4">
+                  <v-icon size="32" color="white">mdi-file-document</v-icon>
+                </v-avatar>
+              </v-badge>
+              <v-avatar v-else color="warning" size="64" class="mr-4">
+                <v-icon size="32" color="white">mdi-file-document</v-icon>
+              </v-avatar>
+              <div>
+                <h3 class="text-h6 font-weight-bold mb-1">Gerenciar Ditados</h3>
+                <p class="text-body-2 text-grey-darken-1 mb-0">
+                  Crie e organize os ditados da instituição
                 </p>
               </div>
             </div>
@@ -201,6 +247,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const usuarios = ref([])
+const solicitacoesPendentes = ref([])
 const carregando = ref(false)
 
 const estatisticas = computed(() => {
@@ -216,8 +263,12 @@ const estatisticas = computed(() => {
   }
 })
 
+const temSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length > 0)
+const totalSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length)
+
 onMounted(() => {
   buscarUsuarios()
+  buscarSolicitacoesPendentes()
 })
 
 async function buscarUsuarios() {
@@ -229,6 +280,15 @@ async function buscarUsuarios() {
     console.error('Erro ao carregar usuários:', erro)
   } finally {
     carregando.value = false
+  }
+}
+
+async function buscarSolicitacoesPendentes() {
+  try {
+    // Solicitações de usuário (acesso) são gerenciadas em Usuarios.vue
+    solicitacoesPendentes.value = []
+  } catch (erro) {
+    console.error('Erro ao carregar solicitações pendentes:', erro)
   }
 }
 
@@ -246,6 +306,14 @@ function irParaUsuarios() {
   router.push('/usuarios')
 }
 
+function irParaTurmas() {
+  router.push('/turmas')
+}
+
+function irParaDitados() {
+  router.push('/ditados')
+}
+
 function irParaPerfil() {
   router.push('/perfil')
 }
@@ -259,5 +327,9 @@ function irParaPerfil() {
 
 .action-card:hover {
   transform: translateY(-4px);
+}
+
+.action-card-destaque {
+  border: 2px solid #d32f2f;
 }
 </style>

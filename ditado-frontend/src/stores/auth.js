@@ -47,6 +47,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function definirUsuario(novoUsuario, novoToken) {
+    usuario.value = novoUsuario
+    token.value = novoToken
+    localStorage.setItem('token', novoToken)
+    localStorage.setItem('usuario', JSON.stringify(novoUsuario))
+  }
+
   return {
     token,
     usuario,
@@ -57,6 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
     ehAluno,
     login,
     logout,
-    atualizarUsuario
+    atualizarUsuario,
+    definirUsuario
   }
 })

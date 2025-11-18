@@ -50,13 +50,13 @@
         ></v-list-item>
       </template>
 
-      <!-- Menu Professor -->
-      <template v-if="authStore.ehProfessor">
+      <!-- Menu Professor e Administrador -->
+      <template v-if="authStore.ehProfessor || authStore.ehAdministrador">
         <v-list-item
           prepend-icon="mdi-file-document"
-          title="Textos"
-          value="textos"
-          to="/cadastro-ditado"
+          title="Ditados"
+          value="ditados"
+          to="/ditados"
           class="menu-item mb-2 rounded-lg"
         ></v-list-item>
 
@@ -64,8 +64,8 @@
           prepend-icon="mdi-school"
           title="Turmas"
           value="turmas"
+          to="/turmas"
           class="menu-item mb-2 rounded-lg"
-          @click="funcionalidadeEmBreve"
         ></v-list-item>
 
         <v-list-item
@@ -74,6 +74,17 @@
           value="relatorios"
           class="menu-item mb-2 rounded-lg"
           @click="funcionalidadeEmBreve"
+        ></v-list-item>
+      </template>
+
+      <!-- Menu Aluno -->
+      <template v-if="authStore.ehAluno">
+        <v-list-item
+          prepend-icon="mdi-school"
+          title="Minhas Turmas"
+          value="minhas-turmas"
+          to="/minhas-turmas"
+          class="menu-item mb-2 rounded-lg"
         ></v-list-item>
       </template>
 

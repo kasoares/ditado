@@ -12,53 +12,18 @@
       </v-card-text>
     </v-card>
 
-    <!-- Estatísticas -->
-    <v-row class="mb-6">
-      <v-col cols="12" sm="6">
-        <v-card elevation="1" class="h-100">
-          <v-card-text class="pa-6">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <v-icon size="40" color="primary">mdi-account-group</v-icon>
-              <v-chip v-if="!carregandoEstatisticas" color="primary" variant="flat" size="large">
-                {{ estatisticas.turmas }}
-              </v-chip>
-              <v-progress-circular v-else indeterminate color="primary" size="32"></v-progress-circular>
-            </div>
-            <h3 class="text-h6 font-weight-bold">Turmas</h3>
-            <p class="text-body-2 text-grey-darken-1 mb-0">Turmas cadastradas</p>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6">
-        <v-card elevation="1" class="h-100">
-          <v-card-text class="pa-6">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <v-icon size="40" color="info">mdi-headphones</v-icon>
-              <v-chip v-if="!carregandoEstatisticas" color="info" variant="flat" size="large">
-                {{ estatisticas.ditados }}
-              </v-chip>
-              <v-progress-circular v-else indeterminate color="info" size="32"></v-progress-circular>
-            </div>
-            <h3 class="text-h6 font-weight-bold">Ditados</h3>
-            <p class="text-body-2 text-grey-darken-1 mb-0">Ditados cadastrados</p>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
     <!-- Ações principais -->
     <v-row class="mb-6">
       <v-col cols="12" md="4">
         <v-card elevation="1" class="h-100 action-card" hover @click="irParaCadastroTextos">
           <v-card-text class="pa-6 text-center">
             <v-icon size="64" color="primary" class="mb-4">mdi-file-document-plus</v-icon>
-            <h3 class="text-h6 font-weight-bold mb-2">Cadastro de Textos</h3>
+            <h3 class="text-h6 font-weight-bold mb-2">Cadastro de Ditados</h3>
             <p class="text-body-2 text-grey-darken-1">
               Crie e organize textos para futuras sessões de ditado.
             </p>
             <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" class="mt-4 text-none">
-              Novo texto
+              Novo ditado
             </v-btn>
             <div class="mt-4">
               <v-divider class="mb-3"></v-divider>
@@ -78,9 +43,18 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="1" class="h-100 action-card" hover @click="irParaGerenciamentoTurmas">
+        <v-card elevation="1" class="h-100 action-card" hover @click="irParaGerenciamentoTurmas" :class="{ 'action-card-destaque': temSolicitacoesPendentes }">
           <v-card-text class="pa-6 text-center">
-            <v-icon size="64" color="success" class="mb-4">mdi-school</v-icon>
+            <v-badge
+              v-if="temSolicitacoesPendentes"
+              color="error"
+              floating
+              :content="totalSolicitacoesPendentes"
+              class="mb-4"
+            >
+              <v-icon size="64" color="success">mdi-school</v-icon>
+            </v-badge>
+            <v-icon v-else size="64" color="success" class="mb-4">mdi-school</v-icon>
             <h3 class="text-h6 font-weight-bold mb-2">Gerenciamento de Turma</h3>
             <p class="text-body-2 text-grey-darken-1">
               Adicione alunos, organize grupos e defina sessões.
@@ -133,6 +107,67 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Solicitações Pendentes (se houver) -->
+    <v-card v-if="temSolicitacoesPendentes" class="mb-6 elevation-1 border-error">
+      <v-card-title class="bg-error text-white pa-4 d-flex align-center">
+        <v-icon class="mr-2">mdi-bell-ring</v-icon>
+        Solicitações de Ingresso Pendentes
+        <v-chip color="white" text-color="error" size="small" class="ml-2">
+          {{ totalSolicitacoesPendentes }}
+        </v-chip>
+      </v-card-title>
+
+      <v-card-text class="pa-6">
+        <v-list class="bg-transparent">
+          <v-list-item
+            v-for="solicitacao in solicitacoesPendentes"
+            :key="solicitacao.id"
+            class="mb-3 rounded border"
+            elevation="0"
+          >
+            <template v-slot:prepend>
+              <v-avatar color="warning">
+                {{ obterIniciaisUsuario(solicitacao.usuario) }}
+              </v-avatar>
+            </template>
+
+            <v-list-item-title class="text-h6 font-weight-bold mb-1">
+              {{ solicitacao.usuario?.nome }}
+            </v-list-item-title>
+
+            <v-list-item-subtitle class="text-body-2 mb-2">
+              <div>{{ solicitacao.usuario?.email }}</div>
+              <div class="text-caption mt-1">
+                Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
+                <v-chip color="info" variant="flat" size="x-small" class="ml-2">
+                  {{ solicitacao.turma?.nome }}
+                </v-chip>
+              </div>
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <div class="d-flex gap-2">
+                <v-btn
+                  icon="mdi-check"
+                  size="small"
+                  variant="flat"
+                  color="success"
+                  @click="aprovarSolicitacao(solicitacao)"
+                />
+                <v-btn
+                  icon="mdi-close"
+                  size="small"
+                  variant="flat"
+                  color="error"
+                  @click="rejeitarSolicitacao(solicitacao)"
+                />
+              </div>
+            </template>
+          </v-list-item>
+        </v-list>
+      </v-card-text>
+    </v-card>
 
     <!-- Ditados passados -->
     <v-card elevation="1">
@@ -266,6 +301,7 @@ const estatisticas = ref({
 })
 
 const ditados = ref([])
+const solicitacoesPendentes = ref([])
 const carregandoDitados = ref(false)
 const carregandoEstatisticas = ref(false)
 const filtroDitados = ref('')
@@ -299,21 +335,20 @@ const ditadosFiltrados = computed(() => {
   return resultado
 })
 
+const temSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length > 0)
+const totalSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length)
+
 onMounted(() => {
   buscarEstatisticas()
   buscarDitados()
+  buscarSolicitacoesPendentes()
 })
 
 async function buscarEstatisticas() {
   carregandoEstatisticas.value = true
   try {
-    // Buscar ditados para contar
     const dadosDitados = await ditadoService.listarTodos()
     estatisticas.value.ditados = dadosDitados.length
-    
-    // TODO: Buscar turmas quando o endpoint estiver disponível
-    // const dadosTurmas = await turmaService.listarTodos()
-    // estatisticas.value.turmas = dadosTurmas.length
   } catch (erro) {
     console.error('Erro ao carregar estatísticas:', erro)
   } finally {
@@ -325,8 +360,6 @@ async function buscarDitados() {
   carregandoDitados.value = true
   try {
     const dados = await ditadoService.listarTodos()
-    // Filtrar apenas ditados que já foram realizados (exemplo: que têm alguma flag ou data de realização)
-    // Como não temos essa informação na API, vamos mostrar uma lista vazia por enquanto
     ditados.value = []
     estatisticas.value.ditados = dados.length
   } catch (erro) {
@@ -337,13 +370,55 @@ async function buscarDitados() {
   }
 }
 
+async function buscarSolicitacoesPendentes() {
+  try {
+    // Nota: Solicitações de entrada em turma podem não estar disponíveis na API
+    // Esse recurso ainda precisa ser clarificado
+    solicitacoesPendentes.value = []
+  } catch (erro) {
+    console.error('Erro ao carregar solicitações pendentes:', erro)
+  }
+}
+
+async function aprovarSolicitacao(solicitacao) {
+  try {
+    // Nota: Aprovação de solicitações de entrada em turma pode não estar na API
+    mostrarSnackbar('Funcionalidade ainda não implementada', 'warning')
+  } catch (erro) {
+    console.error('Erro ao aprovar solicitação:', erro)
+    mostrarSnackbar('Erro ao aprovar solicitação', 'error')
+  }
+}
+
+async function rejeitarSolicitacao(solicitacao) {
+  try {
+    // Nota: Rejeição de solicitações de entrada em turma pode não estar na API
+    mostrarSnackbar('Funcionalidade ainda não implementada', 'warning')
+  } catch (erro) {
+    console.error('Erro ao rejeitar solicitação:', erro)
+    mostrarSnackbar('Erro ao rejeitar solicitação', 'error')
+  }
+}
+
 function formatarData(data) {
   const date = new Date(data)
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   })
+}
+
+function obterIniciaisUsuario(usuario) {
+  if (!usuario || !usuario.nome) return 'A'
+  return usuario.nome
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase()
 }
 
 function obterCorMedia(media) {
@@ -357,7 +432,7 @@ function irParaCadastroTextos() {
 }
 
 function irParaGerenciamentoTurmas() {
-  mostrarSnackbar('Funcionalidade em desenvolvimento', 'info')
+  router.push('/turmas')
 }
 
 function irParaRelatorios() {
@@ -391,7 +466,15 @@ function mostrarSnackbar(mensagem, cor = 'info') {
   transform: translateY(-4px);
 }
 
+.action-card-destaque {
+  border: 2px solid #d32f2f;
+}
+
 .border-b {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.border-error {
+  border: 2px solid #d32f2f;
 }
 </style>
