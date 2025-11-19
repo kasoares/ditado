@@ -251,7 +251,6 @@ const regras = {
 }
 
 onMounted(async () => {
-  console.log('CadastroDitado mounted, editando:', editando.value, 'ditadoId:', ditadoId.value)
   if (editando.value) {
     await carregarDitado()
   }
@@ -261,22 +260,17 @@ async function carregarDitado() {
   carregando.value = true
   erroForm.value = null
   try {
-    console.log('Carregando ditado com ID:', ditadoId.value)
-    
     // Primeira tentativa: buscar do backend
     try {
       const ditado = await ditadoService.buscarPorId(ditadoId.value)
-      console.log('Ditado carregado do backend:', ditado)
       preencherFormulario(ditado)
     } catch (erro) {
       // Se o backend retornar 404, tentar carregar a lista completa e procurar o ditado
-      console.log('Falha ao carregar do backend, tentando carregar lista completa...')
       if (erro.response?.status === 404) {
         const todosDitados = await ditadoService.listarTodos()
         const ditadoEncontrado = todosDitados.find(d => d.id == ditadoId.value)
         
         if (ditadoEncontrado) {
-          console.log('Ditado encontrado na lista:', ditadoEncontrado)
           ditadoEmEdicao = ditadoEncontrado
           preencherFormulario(ditadoEncontrado)
         } else {
@@ -402,7 +396,7 @@ async function salvarDitado() {
     }
     
     setTimeout(() => {
-      voltarParaLista()
+      router.push('/ditados')
     }, 1500)
   } catch (erro) {
     console.error('Erro ao salvar ditado:', erro.response?.data || erro)
@@ -428,7 +422,7 @@ function cancelar() {
 }
 
 function voltarParaLista() {
-  router.push('/professor')
+  router.push('/ditados')
 }
 
 function mostrarSnackbar(mensagem, cor = 'success') {

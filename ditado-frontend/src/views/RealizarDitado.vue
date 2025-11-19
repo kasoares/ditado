@@ -68,7 +68,7 @@
           <div class="d-flex align-center justify-between">
             <div class="d-flex align-center gap-3">
               <v-icon size="32" color="green-darken-2">mdi-volume-high</v-icon>
-              <span class="text-h6 font-weight-bold">Ouça a palavra atual</span>
+              <span class="text-h6 font-weight-bold">Ouça o ditado atual</span>
             </div>
             <div class="d-flex align-center gap-2">
               <v-btn
@@ -193,6 +193,10 @@ const respostas = ref({})
 const carregando = ref(false)
 const submetendo = ref(false)
 const audioBase64 = ref(null)
+const audioTocando = ref(false)
+const progressoAudio = ref(0)
+const tempoAtual = ref(0)
+const duracaoTotal = ref(0)
 
 // Campos opcionais (ainda não implementados no backend)
 const turma = ref('')
@@ -216,11 +220,26 @@ const todasPreenchidas = computed(() => {
 
 onMounted(() => {
   carregarDitado()
+  
+  // Event listeners para o player de áudio
+  if (audioPlayer.value) {
+    audioPlayer.value.addEventListener('timeupdate', atualizarProgressoAudio)
+    audioPlayer.value.addEventListener('ended', () => {
+      audioTocando.value = false
+      progressoAudio.value = 0
+      tempoAtual.value = 0
+      mostrarSnackbar('Áudio finalizado', 'success')
+    })
+    audioPlayer.value.addEventListener('loadedmetadata', () => {
+      duracaoTotal.value = audioPlayer.value.duration
+    })
+  }
 })
 
 onUnmounted(() => {
-  // Parar áudio se estiver tocando
+  // Limpar event listeners e parar áudio
   if (audioPlayer.value) {
+    audioPlayer.value.removeEventListener('timeupdate', atualizarProgressoAudio)
     audioPlayer.value.pause()
     audioPlayer.value.currentTime = 0
   }
@@ -231,8 +250,6 @@ async function carregarDitado() {
   try {
     const id = route.params.id
     const dados = await ditadoService.buscarParaRealizar(id)
-    
-    console.log('Dados do ditado:', dados)
     
     ditado.value = dados
     segmentos.value = dados.segmentos || []
@@ -246,8 +263,6 @@ async function carregarDitado() {
         // Tentar diferentes formatos de áudio
         audioBase64.value = `data:audio/mpeg;base64,${dados.audioBase64}`
       }
-      
-      console.log('Áudio configurado, primeiros caracteres:', audioBase64.value.substring(0, 50))
     }
     
     // Inicializar respostas apenas para segmentos com segmentoId
@@ -256,9 +271,6 @@ async function carregarDitado() {
       .forEach(lacuna => {
         respostas.value[lacuna.segmentoId] = ''
       })
-    
-    console.log('Segmentos processados:', segmentos.value)
-    console.log('Respostas inicializadas:', Object.keys(respostas.value))
   } catch (erro) {
     console.error('Erro ao carregar ditado:', erro)
     mostrarSnackbar('Erro ao carregar ditado', 'error')
@@ -270,19 +282,53 @@ async function carregarDitado() {
 
 function tocarAudio() {
   if (audioPlayer.value && audioBase64.value) {
-    console.log('Tentando tocar áudio...')
-    audioPlayer.value.load() // Recarregar o áudio
+    audioPlayer.value.load()
     audioPlayer.value.play()
       .then(() => {
-        console.log('Áudio tocando com sucesso')
+        audioTocando.value = true
+        mostrarSnackbar('Áudio iniciado', 'info')
       })
       .catch(erro => {
         console.error('Erro ao tocar áudio:', erro)
         mostrarSnackbar('Erro ao reproduzir áudio. Verifique se o formato é válido.', 'error')
       })
   } else {
-    console.error('Player ou áudio não disponível')
     mostrarSnackbar('Áudio não disponível', 'error')
+  }
+}
+
+function pausarAudio() {
+  if (audioPlayer.value) {
+    audioPlayer.value.pause()
+    audioTocando.value = false
+    mostrarSnackbar('Áudio pausado', 'info')
+  }
+}
+
+function pararAudio() {
+  if (audioPlayer.value) {
+    audioPlayer.value.pause()
+    audioPlayer.value.currentTime = 0
+    audioTocando.value = false
+    progressoAudio.value = 0
+    tempoAtual.value = 0
+    mostrarSnackbar('Áudio parado', 'info')
+  }
+}
+
+function formatarTempo(segundos) {
+  const mins = Math.floor(segundos / 60)
+  const secs = Math.floor(segundos % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function atualizarProgressoAudio() {
+  if (audioPlayer.value) {
+    tempoAtual.value = audioPlayer.value.currentTime
+    duracaoTotal.value = audioPlayer.value.duration || 0
+    progressoAudio.value = duracaoTotal.value > 0 
+      ? (tempoAtual.value / duracaoTotal.value) * 100 
+      : 0
   }
 }
 
@@ -317,11 +363,12 @@ async function submeterRespostas() {
     
     mostrarSnackbar('Respostas submetidas com sucesso!', 'success')
     
-    // Redirecionar para página de resultado (a ser criada)
+    // Passar o resultado completo via state
     setTimeout(() => {
       router.push({
         name: 'ResultadoDitado',
-        params: { id: resultado.respostaDitadoId }
+        params: { id: 'resultado' },
+        state: { resultado }
       })
     }, 1500)
   } catch (erro) {
@@ -400,7 +447,9 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   font-size: 1.25rem;
   font-weight: 500;
   color: #000;
-  min-width: 120px;
+  min-width: 60px;
+  max-width: 200px;
+  width: auto;
   text-align: center;
   outline: none;
   transition: border-color 0.3s;

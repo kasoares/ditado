@@ -22,7 +22,13 @@
 
     <!-- Conteúdo -->
     <v-container class="py-12">
-      <v-card elevation="1" class="text-center pa-12">
+      <!-- Loading -->
+      <div v-if="carregando" class="text-center py-12">
+        <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        <p class="text-grey mt-4">Carregando resultado...</p>
+      </div>
+
+      <v-card v-else elevation="1" class="text-center pa-12">
         <v-icon size="120" :color="corResultado" class="mb-6">
           {{ iconeResultado }}
         </v-icon>
@@ -79,26 +85,50 @@
         </v-btn>
       </v-card>
 
-      <!-- Detalhes (implementação futura) -->
-      <v-card v-if="detalhes.length > 0" elevation="1" class="mt-6">
+      <!-- Detalhes das Respostas -->
+      <v-card v-if="!carregando && detalhes.length > 0" elevation="1" class="mt-6">
         <v-card-title class="pa-6 bg-grey-lighten-5">
           <v-icon class="mr-2">mdi-format-list-bulleted</v-icon>
           Detalhes das Respostas
         </v-card-title>
         <v-card-text class="pa-6">
           <v-list>
-            <v-list-item v-for="(detalhe, index) in detalhes" :key="index" class="mb-2">
+            <v-list-item 
+              v-for="(detalhe, index) in detalhes" 
+              :key="index" 
+              class="mb-3 pa-4 rounded"
+              :class="detalhe.correto ? 'bg-success-lighten-5' : 'bg-error-lighten-5'"
+            >
               <template v-slot:prepend>
-                <v-icon :color="detalhe.correto ? 'success' : 'error'">
-                  {{ detalhe.correto ? 'mdi-check-circle' : 'mdi-close-circle' }}
-                </v-icon>
+                <v-avatar :color="detalhe.correto ? 'success' : 'error'" size="40">
+                  <v-icon color="white" size="24">
+                    {{ detalhe.correto ? 'mdi-check' : 'mdi-close' }}
+                  </v-icon>
+                </v-avatar>
               </template>
-              <v-list-item-title>
-                Sua resposta: <strong>{{ detalhe.respostaFornecida }}</strong>
+              
+              <v-list-item-title class="mb-2">
+                <span class="text-body-2 text-grey-darken-1">Sua resposta:</span>
+                <span 
+                  class="text-h6 font-weight-bold ml-2" 
+                  :class="detalhe.correto ? 'text-success-darken-2' : 'text-error-darken-2'"
+                >
+                  {{ detalhe.respostaFornecida || '(vazio)' }}
+                </span>
               </v-list-item-title>
-              <v-list-item-subtitle v-if="!detalhe.correto">
-                Resposta correta: <strong>{{ detalhe.respostaEsperada }}</strong>
-                <v-chip v-if="detalhe.tipoErro" size="small" class="ml-2">
+              
+              <v-list-item-subtitle v-if="!detalhe.correto" class="mt-1">
+                <span class="text-body-2">Resposta correta:</span>
+                <span class="text-h6 font-weight-bold text-success-darken-2 ml-2">
+                  {{ detalhe.respostaEsperada }}
+                </span>
+                <v-chip 
+                  v-if="detalhe.tipoErro" 
+                  size="small" 
+                  color="error" 
+                  variant="outlined"
+                  class="ml-2"
+                >
                   {{ detalhe.tipoErro }}
                 </v-chip>
               </v-list-item-subtitle>
@@ -107,22 +137,34 @@
         </v-card-text>
       </v-card>
     </v-container>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
+      {{ snackbar.mensagem }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ditadoService } from '@/services/ditadoService'
 
 const router = useRouter()
 const route = useRoute()
 
-// Dados mockados - em produção viriam da API
-const pontuacao = ref(78)
-const totalLacunas = ref(6)
-const acertos = ref(5)
-const erros = ref(1)
+const carregando = ref(true)
+const pontuacao = ref(0)
+const totalLacunas = ref(0)
+const acertos = ref(0)
+const erros = ref(0)
 const detalhes = ref([])
+
+const snackbar = ref({
+  show: false,
+  mensagem: '',
+  color: 'success'
+})
 
 const corResultado = computed(() => {
   if (pontuacao.value >= 80) return 'success'
@@ -142,13 +184,77 @@ const mensagemResultado = computed(() => {
   return 'Continue praticando!'
 })
 
-onMounted(() => {
-  // TODO: Buscar resultado real da API
-  console.log('ID da resposta:', route.params.id)
+onMounted(async () => {
+  await carregarResultado()
 })
+
+async function carregarResultado() {
+  carregando.value = true
+  try {
+    // Tentar obter resultado do state (passado pela tela anterior)
+    let resultado = history.state?.resultado
+    
+    // Se não tiver no state, buscar da API (fallback)
+    if (!resultado) {
+      const respostaDitadoId = route.params.id
+      if (respostaDitadoId && respostaDitadoId !== 'resultado') {
+        resultado = await ditadoService.buscarResultado(respostaDitadoId)
+      } else {
+        throw new Error('Resultado não encontrado')
+      }
+    }
+    
+    // Processar detalhes das respostas
+    if (resultado.detalhes && Array.isArray(resultado.detalhes)) {
+      detalhes.value = resultado.detalhes.map(resp => {
+        // Comparar respostas (ignorando case e espaços)
+        const respostaFornecida = (resp.respostaFornecida || '').trim().toLowerCase()
+        const respostaEsperada = (resp.respostaEsperada || '').trim().toLowerCase()
+        const estaCorreto = respostaFornecida === respostaEsperada
+        
+        return {
+          segmentoId: resp.segmentoId,
+          respostaFornecida: resp.respostaFornecida,
+          respostaEsperada: resp.respostaEsperada,
+          correto: estaCorreto,
+          tipoErro: !estaCorreto && resp.tipoErro ? resp.tipoErro : null
+        }
+      })
+      
+      // Calcular estatísticas no frontend
+      totalLacunas.value = detalhes.value.length
+      acertos.value = detalhes.value.filter(d => d.correto).length
+      erros.value = detalhes.value.filter(d => !d.correto).length
+      pontuacao.value = totalLacunas.value > 0 
+        ? Math.round((acertos.value / totalLacunas.value) * 100) 
+        : 0
+    } else {
+      // Se API já forneceu os valores calculados, usar eles
+      pontuacao.value = resultado.pontuacao || 0
+      acertos.value = resultado.acertos || 0
+      erros.value = resultado.erros || 0
+      totalLacunas.value = resultado.totalLacunas || (acertos.value + erros.value)
+    }
+  } catch (erro) {
+    console.error('Erro ao carregar resultado:', erro)
+    mostrarSnackbar('Erro ao carregar resultado do ditado', 'error')
+    // Redirecionar de volta após erro
+    setTimeout(() => router.push('/aluno'), 3000)
+  } finally {
+    carregando.value = false
+  }
+}
 
 function voltarParaInicio() {
   router.push('/aluno')
+}
+
+function mostrarSnackbar(mensagem, cor = 'success') {
+  snackbar.value = {
+    show: true,
+    mensagem,
+    color: cor
+  }
 }
 </script>
 

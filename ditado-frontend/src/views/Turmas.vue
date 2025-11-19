@@ -87,35 +87,54 @@
 
         <template v-slot:item.acoes="{ item }">
           <div class="d-flex gap-2">
-            <v-btn
-              icon="mdi-plus"
-              size="small"
-              variant="text"
-              color="success"
-              title="Gerenciar alunos"
-              @click="irParaGerenciarAlunos(item)"
-            />
-            <v-btn
-              icon="mdi-eye"
-              size="small"
-              variant="text"
-              color="primary"
-              @click="visualizarTurma(item)"
-            />
-            <v-btn
-              icon="mdi-pencil"
-              size="small"
-              variant="text"
-              color="warning"
-              @click="editarTurma(item)"
-            />
-            <v-btn
-              icon="mdi-delete"
-              size="small"
-              variant="text"
-              color="error"
-              @click="deletarTurma(item)"
-            />
+            <v-tooltip text="Gerenciar alunos" location="top">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-plus"
+                  size="small"
+                  variant="text"
+                  color="success"
+                  @click="irParaGerenciarAlunos(item)"
+                />
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Visualizar detalhes" location="top">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-eye"
+                  size="small"
+                  variant="text"
+                  color="primary"
+                  @click="visualizarTurma(item)"
+                />
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Editar turma" location="top">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-pencil"
+                  size="small"
+                  variant="text"
+                  color="warning"
+                  @click="editarTurma(item)"
+                />
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Excluir turma" location="top">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-delete"
+                  size="small"
+                  variant="text"
+                  color="error"
+                  @click="deletarTurma(item)"
+                />
+              </template>
+            </v-tooltip>
           </div>
         </template>
 
@@ -755,14 +774,12 @@ async function visualizarTurma(turma) {
 
 async function carregarDetalhesTurma(turmaId) {
   try {
-    console.log('Carregando detalhes da turma ID:', turmaId)
     const turmaDetalhes = await turmaService.buscarPorId(turmaId)
     turmaSelecionada.value = turmaDetalhes
     membros.value = turmaDetalhes.alunos || []
     // ditadosTurma e solicitacoesPendentes não são retornados pela API no escopo atual
     ditadosTurma.value = []
     solicitacoesPendentes.value = []
-    console.log('Detalhes da turma carregados com sucesso:', turmaSelecionada.value)
   } catch (erro) {
     console.error('Erro ao carregar detalhes da turma:', erro)
     mostrarSnackbar('Erro ao carregar detalhes da turma', 'error')

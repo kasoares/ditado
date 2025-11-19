@@ -54,31 +54,32 @@
 
             <!-- Lista de alunos -->
             <div v-else-if="alunos.length > 0">
-              <v-list class="bg-transparent">
+              <v-list class="bg-transparent" density="compact">
                 <v-list-item
                   v-for="aluno in alunosFiltrados"
                   :key="aluno.id"
-                  class="mb-2 rounded border"
+                  class="mb-1 rounded border pa-2"
                   :class="{ 'bg-green-lighten-5': selecionados.includes(aluno.id) }"
+                  density="compact"
                 >
                   <template v-slot:prepend>
                     <v-checkbox
                       :model-value="selecionados.includes(aluno.id)"
                       @change="alternarSeleção(aluno.id)"
                       density="compact"
-                      class="mr-2"
+                      hide-details
                     ></v-checkbox>
                   </template>
 
                   <div class="d-flex align-center gap-2">
-                    <v-avatar size="40" color="primary" text-color="white">
-                      {{ aluno.nome.charAt(0).toUpperCase() }}
+                    <v-avatar size="32" color="primary" text-color="white">
+                      <span class="text-caption">{{ aluno.nome.charAt(0).toUpperCase() }}</span>
                     </v-avatar>
-                    <div>
-                      <v-list-item-title class="font-weight-bold">
+                    <div class="flex-grow-1">
+                      <v-list-item-title class="text-body-2 font-weight-bold">
                         {{ aluno.nome }}
                       </v-list-item-title>
-                      <v-list-item-subtitle>
+                      <v-list-item-subtitle class="text-caption">
                         {{ aluno.login }}
                       </v-list-item-subtitle>
                     </div>
@@ -88,8 +89,8 @@
                     <v-chip
                       v-if="alunosJaAdicionados.includes(aluno.id)"
                       color="success"
-                      text-color="white"
-                      size="small"
+                      variant="tonal"
+                      size="x-small"
                       prepend-icon="mdi-check"
                     >
                       Na turma

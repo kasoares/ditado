@@ -31,16 +31,6 @@ export const ditadoService = {
     }
   },
 
-  async atualizar(id, dados) {
-    try {
-      const response = await api.put(`/Ditados/${id}`, dados)
-      return response.data
-    } catch (erro) {
-      console.error('Erro ao atualizar ditado:', erro.response?.data || erro)
-      throw erro
-    }
-  },
-
   async buscarParaRealizar(id) {
     try {
       const response = await api.get(`/Ditados/${id}/realizar`)
@@ -57,6 +47,16 @@ export const ditadoService = {
       return response.data
     } catch (erro) {
       console.error('Erro ao submeter resposta:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  async buscarResultado(respostaDitadoId) {
+    try {
+      const response = await api.get(`/RespostasDitados/${respostaDitadoId}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao buscar resultado:', erro.response?.data || erro)
       throw erro
     }
   }
