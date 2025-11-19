@@ -63,24 +63,94 @@
       </v-card>
 
       <!-- Área de Áudio e Controles -->
-      <v-card class="mb-6" elevation="1" color="green-lighten-5">
+      <v-card class="mb-6" elevation="1">
         <v-card-text class="pa-6">
-          <div class="d-flex align-center justify-between">
-            <div class="d-flex align-center gap-3">
-              <v-icon size="32" color="green-darken-2">mdi-volume-high</v-icon>
+          <div class="d-flex flex-column gap-4">
+            <div class="d-flex align-center">
+              <v-icon size="32" color="primary" class="mr-3">mdi-volume-high</v-icon>
               <span class="text-h6 font-weight-bold">Ouça o ditado atual</span>
             </div>
-            <div class="d-flex align-center gap-2">
-              <v-btn
-                color="success"
-                variant="flat"
-                prepend-icon="mdi-refresh"
-                class="text-none"
-                @click="tocarAudio"
-                :disabled="!audioBase64"
-              >
-                Repetir
-              </v-btn>
+            
+            <!-- Player de áudio com controles completos -->
+            <div class="audio-player-container">
+              <div class="d-flex align-center gap-3 mb-3">
+                <v-btn
+                  :color="!audioTocando ? 'primary' : 'grey'"
+                  :variant="!audioTocando ? 'flat' : 'outlined'"
+                  icon="mdi-play"
+                  size="large"
+                  @click="tocarAudio"
+                  :disabled="!audioBase64 || audioTocando"
+                />
+                <v-btn
+                  color="warning"
+                  variant="flat"
+                  icon="mdi-pause"
+                  size="large"
+                  @click="pausarAudio"
+                  :disabled="!audioBase64 || !audioTocando"
+                />
+                <v-btn
+                  color="error"
+                  variant="flat"
+                  icon="mdi-stop"
+                  size="large"
+                  @click="pararAudio"
+                  :disabled="!audioBase64 || !audioTocando"
+                />
+                
+                <v-divider vertical class="mx-2"></v-divider>
+                
+                <!-- Seletor de velocidade -->
+                <v-menu>
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      variant="outlined"
+                      color="primary"
+                      class="text-none"
+                      :disabled="!audioBase64"
+                    >
+                      <v-icon start>mdi-speedometer</v-icon>
+                      {{ velocidadeAudio }}x
+                    </v-btn>
+                  </template>
+                  <v-list density="compact">
+                    <v-list-item
+                      v-for="vel in velocidadesDisponiveis"
+                      :key="vel"
+                      @click="alterarVelocidade(vel)"
+                      :class="{ 'bg-primary-lighten-4': velocidadeAudio === vel }"
+                    >
+                      <v-list-item-title>{{ vel }}x</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                
+                <v-divider vertical class="mx-2"></v-divider>
+                
+                <div class="flex-grow-1">
+                  <v-slider
+                    v-model="progressoAudio"
+                    :max="100"
+                    :step="0.1"
+                    color="primary"
+                    track-color="grey-lighten-2"
+                    thumb-label
+                    hide-details
+                    @update:model-value="buscarPosicaoAudio"
+                    :disabled="!audioBase64"
+                  >
+                    <template v-slot:thumb-label="{ modelValue }">
+                      {{ formatarTempo((modelValue / 100) * duracaoTotal) }}
+                    </template>
+                  </v-slider>
+                  <div class="d-flex justify-space-between text-caption text-grey mt-1">
+                    <span>{{ formatarTempo(tempoAtual) }}</span>
+                    <span>{{ formatarTempo(duracaoTotal) }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </v-card-text>
@@ -197,6 +267,8 @@ const audioTocando = ref(false)
 const progressoAudio = ref(0)
 const tempoAtual = ref(0)
 const duracaoTotal = ref(0)
+const velocidadeAudio = ref(1)
+const velocidadesDisponiveis = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 // Campos opcionais (ainda não implementados no backend)
 const turma = ref('')
@@ -332,6 +404,22 @@ function atualizarProgressoAudio() {
   }
 }
 
+function buscarPosicaoAudio(valor) {
+  if (audioPlayer.value && duracaoTotal.value > 0) {
+    const novoTempo = (valor / 100) * duracaoTotal.value
+    audioPlayer.value.currentTime = novoTempo
+    tempoAtual.value = novoTempo
+  }
+}
+
+function alterarVelocidade(velocidade) {
+  velocidadeAudio.value = velocidade
+  if (audioPlayer.value) {
+    audioPlayer.value.playbackRate = velocidade
+  }
+  mostrarSnackbar(`Velocidade alterada para ${velocidade}x`, 'info')
+}
+
 function verificarPreenchimento() {
   // Método chamado a cada digitação para atualizar o estado
 }
@@ -464,5 +552,12 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   color: #9e9e9e;
   font-weight: 400;
   font-size: 1rem;
+}
+
+.audio-player-container {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
 }
 </style>
