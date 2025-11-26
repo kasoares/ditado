@@ -31,10 +31,12 @@
             <v-text-field
               v-model="pesquisa"
               prepend-inner-icon="mdi-magnify"
-              placeholder="Pesquisar ditados..."
+              placeholder="Filtrar ditados"
               variant="outlined"
               density="comfortable"
               @update:model-value="filtrarDitados"
+              clearable
+              hide-details
             />
           </v-col>
           <v-col cols="12" md="4">

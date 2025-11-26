@@ -53,7 +53,7 @@
                 <v-col cols="12" sm="6" md="6">
                   <v-text-field
                     v-model="filtros.busca"
-                    label="Buscar"
+                    label="Filtrar usuários"
                     placeholder="Nome, email ou ID"
                     variant="outlined"
                     density="comfortable"
