@@ -484,13 +484,13 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   border: none;
   border-bottom: 2px solid #1976d2;
   background-color: transparent;
-  padding: 4px 8px;
   font-size: 1.25rem;
   font-weight: 500;
   color: #000;
   min-width: 60px;
   max-width: 200px;
   width: auto;
+  height: 2.5rem;
   text-align: center;
   outline: none;
   transition: border-color 0.3s;
