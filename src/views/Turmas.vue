@@ -29,7 +29,7 @@
         <v-text-field
           v-model="pesquisa"
           prepend-inner-icon="mdi-magnify"
-          placeholder="Pesquisar turmas..."
+          placeholder="Filtrar turmas"
           variant="outlined"
           density="comfortable"
           @update:model-value="filtrarTurmas"
@@ -586,7 +586,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { turmaService } from '@/services/turmaService'
@@ -673,16 +673,18 @@ async function carregarTurmas() {
 }
 
 function filtrarTurmas() {
+  
+  let resultado = [...turmas.value]
+  
   if (pesquisa.value.trim()) {
     const termo = pesquisa.value.toLowerCase()
-    turmasFiltradas.value = turmas.value.filter(t =>
+    resultado = resultado.filter(t =>
       t.nome.toLowerCase().includes(termo) ||
-      (t.descricao && t.descricao.toLowerCase().includes(termo)) ||
-      t.codigo.toLowerCase().includes(termo)
+      t.id.toString().toLowerCase().includes(termo)
     )
-  } else {
-    turmasFiltradas.value = [...turmas.value]
   }
+
+  turmasFiltradas.value = resultado
 }
 
 function abrirFormulario() {
