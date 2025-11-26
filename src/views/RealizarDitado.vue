@@ -90,45 +90,7 @@
                   @click="pausarAudio"
                   :disabled="!audioBase64 || !audioTocando"
                 />
-                <v-btn
-                  color="error"
-                  variant="flat"
-                  icon="mdi-stop"
-                  size="large"
-                  @click="pararAudio"
-                  :disabled="!audioBase64 || !audioTocando"
-                />
-                
-                <v-divider vertical class="mx-2"></v-divider>
-                
-                <!-- Seletor de velocidade -->
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-btn
-                      v-bind="props"
-                      variant="outlined"
-                      color="primary"
-                      class="text-none"
-                      :disabled="!audioBase64"
-                    >
-                      <v-icon start>mdi-speedometer</v-icon>
-                      {{ velocidadeAudio }}x
-                    </v-btn>
-                  </template>
-                  <v-list density="compact">
-                    <v-list-item
-                      v-for="vel in velocidadesDisponiveis"
-                      :key="vel"
-                      @click="alterarVelocidade(vel)"
-                      :class="{ 'bg-primary-lighten-4': velocidadeAudio === vel }"
-                    >
-                      <v-list-item-title>{{ vel }}x</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-                
-                <v-divider vertical class="mx-2"></v-divider>
-                
+             
                 <div class="flex-grow-1">
                   <v-slider
                     v-model="progressoAudio"
@@ -187,7 +149,6 @@
             density="compact"
             class="mt-6"
           >
-            <v-icon start>mdi-information</v-icon>
             Você pode ouvir quantas vezes precisar.
           </v-alert>
         </v-card-text>
@@ -267,8 +228,6 @@ const audioTocando = ref(false)
 const progressoAudio = ref(0)
 const tempoAtual = ref(0)
 const duracaoTotal = ref(0)
-const velocidadeAudio = ref(1)
-const velocidadesDisponiveis = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 // Campos opcionais (ainda não implementados no backend)
 const turma = ref('')
@@ -412,13 +371,7 @@ function buscarPosicaoAudio(valor) {
   }
 }
 
-function alterarVelocidade(velocidade) {
-  velocidadeAudio.value = velocidade
-  if (audioPlayer.value) {
-    audioPlayer.value.playbackRate = velocidade
-  }
-  mostrarSnackbar(`Velocidade alterada para ${velocidade}x`, 'info')
-}
+
 
 function verificarPreenchimento() {
   // Método chamado a cada digitação para atualizar o estado
