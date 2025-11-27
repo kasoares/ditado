@@ -10,8 +10,8 @@
 
           <v-card-text class="pa-6">
             <!-- Campo de busca -->
-            <v-row class="mb-6">
-              <v-col cols="12" md="8">
+            <v-row class="mb-6 align-center">
+              <v-col cols="12" sm="8" md="9">
                 <v-text-field
                   v-model="busca"
                   label="Buscar aluno"
@@ -19,9 +19,10 @@
                   prepend-inner-icon="mdi-magnify"
                   variant="outlined"
                   density="comfortable"
+                  hide-details
                 />
               </v-col>
-              <v-col cols="12" md="4" class="d-flex align-center" style="gap: 1rem">
+              <v-col cols="12" sm="4" md="3" class="d-flex align-center justify-end" style="gap: 1rem;">
                 <v-btn
                   color="success"
                   :disabled="salvando"

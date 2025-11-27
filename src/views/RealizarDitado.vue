@@ -203,6 +203,30 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
     </v-snackbar>
+
+    <!-- Dialog de Confirmação de Saída -->
+    <v-dialog v-model="dialogSair" max-width="400">
+      <v-card>
+        <v-card-title class="bg-red-lighten-5 pa-4">
+          <v-icon color="error" class="mr-2">mdi-alert</v-icon>
+          Confirmar Saída
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-2">
+            Tem certeza que deseja sair? Seu progresso será perdido.
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn variant="text" @click="dialogSair = false">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="error" variant="flat" @click="confirmarSaida">
+            Sair
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -227,6 +251,7 @@ const audioTocando = ref(false)
 const progressoAudio = ref(0)
 const tempoAtual = ref(0)
 const duracaoTotal = ref(0)
+const dialogSair = ref(false)
 
 // Campos opcionais (ainda não implementados no backend)
 const turma = ref('')
@@ -439,9 +464,12 @@ async function submeterRespostas() {
 }
 
 function sairDitado() {
-  if (confirm('Deseja realmente sair? Seu progresso será perdido.')) {
-    router.push('/aluno')
-  }
+  dialogSair.value = true
+}
+
+function confirmarSaida() {
+  dialogSair.value = false
+  router.push('/aluno')
 }
 
 function mostrarSnackbar(mensagem, cor = 'success') {

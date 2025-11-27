@@ -18,7 +18,7 @@
             class="text-none"
             @click="voltarParaLista"
           >
-            Ver Banco
+            Ver Banco de Ditados
           </v-btn>
         </div>
       </v-card-text>
@@ -203,11 +203,35 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
     </v-snackbar>
+
+    <!-- Dialog de Confirmação de Saída -->
+    <v-dialog v-model="dialogSair" max-width="400">
+      <v-card>
+        <v-card-title class="bg-amber-lighten-5 pa-4">
+          <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+          Confirmar Saída
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-2">
+            Tem certeza que deseja sair? As alterações não salvas serão perdidas.
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn variant="text" @click="dialogSair = false">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="warning" variant="flat" @click="confirmarSaida">
+            Sair
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onUnmounted, onMounted, computed } from 'vue'
+import { ref, onUnmounted, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ditadoService } from '@/services/ditadoService'
 
@@ -231,6 +255,8 @@ let ditadoEmEdicao = null
 const salvando = ref(false)
 const carregando = ref(false)
 const erroForm = ref(null)
+const dialogSair = ref(false)
+const alteracoesNaoSalvas = ref(false)
 
 // Gravação
 const gravando = ref(false)
@@ -300,7 +326,17 @@ function preencherFormulario(ditado) {
     descricao: ditado.descricao || '',
     textoComMarcacoes: ditado.textoComMarcacoes || ''
   }
+  // Resetar o estado de alterações após preencher
+  setTimeout(() => {
+    alteracoesNaoSalvas.value = false
+  }, 100)
 }
+
+// Observar alterações no formulário
+watch(formDados, () => {
+  alteracoesNaoSalvas.value = true
+}, { deep: true })
+
 
 async function iniciarGravacao() {
   try {
@@ -416,9 +452,16 @@ async function salvarDitado() {
 }
 
 function cancelar() {
-  if (confirm('Deseja realmente cancelar? Todas as alterações serão perdidas.')) {
+  if (alteracoesNaoSalvas.value) {
+    dialogSair.value = true
+  } else {
     voltarParaLista()
   }
+}
+
+function confirmarSaida() {
+  dialogSair.value = false
+  voltarParaLista()
 }
 
 function voltarParaLista() {
