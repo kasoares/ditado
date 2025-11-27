@@ -89,45 +89,7 @@
                   @click="pausarAudio"
                   :disabled="!audioBase64 || !audioTocando"
                 />
-                <v-btn
-                  color="error"
-                  variant="flat"
-                  icon="mdi-stop"
-                  size="large"
-                  @click="pararAudio"
-                  :disabled="!audioBase64 || !audioTocando"
-                />
-                
-                <v-divider vertical class="mx-2"></v-divider>
-                
-                <!-- Seletor de velocidade -->
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-btn
-                      v-bind="props"
-                      variant="outlined"
-                      color="primary"
-                      class="text-none"
-                      :disabled="!audioBase64"
-                    >
-                      <v-icon start>mdi-speedometer</v-icon>
-                      {{ velocidadeAudio }}x
-                    </v-btn>
-                  </template>
-                  <v-list density="compact">
-                    <v-list-item
-                      v-for="vel in velocidadesDisponiveis"
-                      :key="vel"
-                      @click="alterarVelocidade(vel)"
-                      :class="{ 'bg-primary-lighten-4': velocidadeAudio === vel }"
-                    >
-                      <v-list-item-title>{{ vel }}x</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-                
-                <v-divider vertical class="mx-2"></v-divider>
-                
+             
                 <div class="flex-grow-1">
                   <v-slider
                     v-model="progressoAudio"
@@ -171,7 +133,7 @@
                   v-model="respostas[segmento.segmentoId]"
                   type="text"
                   class="lacuna-input"
-                  :placeholder="`palavra ${segmento.ordem}`"
+                  :placeholder="numeroDasLacunas[segmento.segmentoId]"
                   @input="verificarPreenchimento"
                 />
               </span>
@@ -265,8 +227,6 @@ const audioTocando = ref(false)
 const progressoAudio = ref(0)
 const tempoAtual = ref(0)
 const duracaoTotal = ref(0)
-const velocidadeAudio = ref(1)
-const velocidadesDisponiveis = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 // Campos opcionais (ainda não implementados no backend)
 const turma = ref('')
@@ -286,6 +246,18 @@ const todasPreenchidas = computed(() => {
     const resposta = respostas.value[lacuna.segmentoId]
     return resposta && resposta.trim() !== ''
   })
+})
+
+const numeroDasLacunas = computed(() => {
+  const mapa = {}
+  let numero = 1
+  segmentos.value.forEach(segmento => {
+    if (segmento.segmentoId !== null && segmento.segmentoId !== undefined) {
+      mapa[segmento.segmentoId] = `Palavra ${numero}`
+      numero++
+    }
+  })
+  return mapa
 })
 
 onMounted(() => {
@@ -410,13 +382,7 @@ function buscarPosicaoAudio(valor) {
   }
 }
 
-function alterarVelocidade(velocidade) {
-  velocidadeAudio.value = velocidade
-  if (audioPlayer.value) {
-    audioPlayer.value.playbackRate = velocidade
-  }
-  mostrarSnackbar(`Velocidade alterada para ${velocidade}x`, 'info')
-}
+
 
 function verificarPreenchimento() {
   // Método chamado a cada digitação para atualizar o estado
@@ -529,13 +495,13 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   border: none;
   border-bottom: 2px solid #1976d2;
   background-color: transparent;
-  padding: 4px 8px;
   font-size: 1.25rem;
   font-weight: 500;
   color: #000;
   min-width: 60px;
   max-width: 200px;
   width: auto;
+  height: 2.2rem;
   text-align: center;
   outline: none;
   transition: border-color 0.3s;

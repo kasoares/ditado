@@ -280,12 +280,20 @@ async function carregarDados() {
 
 async function carregarMinhasTurmas() {
   try {
-    // Para alunos, carregamos todas as turmas nas quais o aluno está inscrito
-    // A API retorna apenas as turmas do usuário autenticado
-    const turmas = await turmaService.listarTodas()
+    // Obter o ID do aluno logado atualmente
+    const alunoId = authStore.usuario?.id
+    
+    if (!alunoId) {
+      console.error('Usuário não autenticado')
+      mostrarSnackbar('Erro: usuário não autenticado', 'error')
+      return
+    }
+    // Chamar a função da API que retorna apenas as turmas do aluno
+    const turmas = await turmaService.listarDosAlunos(alunoId)
     minhasTurmas.value = turmas
   } catch (erro) {
     console.error('Erro ao carregar minhas turmas:', erro)
+    mostrarSnackbar('Erro ao carregar turmas', 'error')
   }
 }
 
