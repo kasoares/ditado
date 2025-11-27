@@ -21,7 +21,7 @@
                   density="comfortable"
                 />
               </v-col>
-              <v-col cols="12" md="4" class="d-flex align-center gap-2">
+              <v-col cols="12" md="4" class="d-flex align-center" style="gap: 1rem">
                 <v-btn
                   color="success"
                   :disabled="salvando"
@@ -71,11 +71,11 @@
                     ></v-checkbox>
                   </template>
 
-                  <div class="d-flex align-center gap-2">
+                  <div class="d-flex align-center">
                     <v-avatar size="32" color="primary" text-color="white">
                       <span class="text-caption">{{ aluno.nome.charAt(0).toUpperCase() }}</span>
                     </v-avatar>
-                    <div class="flex-grow-1">
+                    <div class="flex-grow-1 ml-4">
                       <v-list-item-title class="text-body-2 font-weight-bold">
                         {{ aluno.nome }}
                       </v-list-item-title>

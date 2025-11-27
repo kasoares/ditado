@@ -38,27 +38,26 @@
       <!-- Título e Informações -->
       <v-card class="mb-6" elevation="1">
         <v-card-text class="pa-6">
-          <div class="d-flex align-center justify-between mb-4">
+          <div class="d-flex align-start justify-space-between mb-2">
             <div>
-              <h1 class="text-h4 font-weight-bold mb-2">{{ ditado?.titulo }}</h1>
-              <p class="text-body-1 text-grey-darken-1">
-                Ouça as palavras e digite nos espaços vazios. Depois, clique em Submeter.
-              </p>
+              <h1 class="text-h4 font-weight-bold">{{ ditado?.titulo }}</h1>
             </div>
-            <div class="d-flex align-center gap-4">
-              <v-chip color="success" size="large" variant="flat">
+            <div class="d-flex align-center gap-2">
+              <v-chip color="success" size="default" variant="flat">
                 <v-avatar start>
-                  <v-icon>mdi-account</v-icon>
+                  <v-icon size="20">mdi-account</v-icon>
                 </v-avatar>
-                {{ authStore.usuario?.nome?.split(' ')[0] }} • 
-                {{ turma || '-' }}
+                {{ authStore.usuario?.nome?.split(' ')[0] }} • {{ turma || '-' }}
               </v-chip>
-              <v-chip color="info" size="large" variant="flat">
+              <v-chip color="info" size="default" variant="flat">
                 <v-icon start>mdi-clock-outline</v-icon>
                 Tempo estimado {{ tempoEstimado || '5-7' }} min
               </v-chip>
             </div>
           </div>
+          <p class="text-body-1 text-grey-darken-1 mb-0">
+            Ouça as palavras e digite nos espaços vazios. Depois, clique em Submeter.
+          </p>
         </v-card-text>
       </v-card>
 
@@ -187,7 +186,6 @@
             density="compact"
             class="mt-6"
           >
-            <v-icon start>mdi-information</v-icon>
             Você pode ouvir quantas vezes precisar.
           </v-alert>
         </v-card-text>
