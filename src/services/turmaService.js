@@ -94,6 +94,17 @@ export const turmaService = {
     }
   },
 
+    // LISTAR TURMAS DE UM ALUNO
+  async listarDosAlunos(alunoId) {
+    try {
+      const response = await api.get(`/Turmas/aluno/${alunoId}`)
+      return response.data || []
+    } catch (erro) {
+      console.error('Erro ao listar turmas do aluno:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
   // ADICIONAR ALUNOS À TURMA
   async adicionarAlunos(turmaId, alunosIds) {
     try {
