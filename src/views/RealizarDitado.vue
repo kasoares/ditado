@@ -134,7 +134,7 @@
                   v-model="respostas[segmento.segmentoId]"
                   type="text"
                   class="lacuna-input"
-                  :placeholder="`palavra ${segmento.ordem}`"
+                  :placeholder="numeroDasLacunas[segmento.segmentoId]"
                   @input="verificarPreenchimento"
                 />
               </span>
@@ -247,6 +247,18 @@ const todasPreenchidas = computed(() => {
     const resposta = respostas.value[lacuna.segmentoId]
     return resposta && resposta.trim() !== ''
   })
+})
+
+const numeroDasLacunas = computed(() => {
+  const mapa = {}
+  let numero = 1
+  segmentos.value.forEach(segmento => {
+    if (segmento.segmentoId !== null && segmento.segmentoId !== undefined) {
+      mapa[segmento.segmentoId] = `Palavra ${numero}`
+      numero++
+    }
+  })
+  return mapa
 })
 
 onMounted(() => {
