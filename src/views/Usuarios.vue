@@ -486,6 +486,30 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog de Confirmação para Adicionar à Turma -->
+    <v-dialog v-model="dialogConfirmarAdicionar" max-width="500">
+      <v-card>
+        <v-card-title class="pa-4 bg-blue-lighten-5">
+          <v-icon color="info" class="mr-2">mdi-help-circle</v-icon>
+          Adicionar à Turma
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1">
+            Deseja adicionar o aluno <strong>{{ alunoAprovado?.nome }}</strong> a uma turma agora?
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn variant="text" @click="dialogConfirmarAdicionar = false">
+            Não, depois
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="flat" @click="prosseguirParaAdicionarTurma">
+            Sim, adicionar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar de sucesso -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
@@ -523,8 +547,10 @@ const tipoParaNumero = {
 const dialogUsuario = ref(false)
 const dialogExclusao = ref(false)
 const dialogAdicionarTurma = ref(false)
+const dialogConfirmarAdicionar = ref(false)
 const usuarioEditando = ref(null)
 const usuarioParaExcluir = ref(null)
+const alunoAprovado = ref(null)
 const usuarioParaAdicionarTurma = ref(null)
 const turmasDisponiveis = ref([])
 const turmaSelecionadaParaAdicionar = ref(null)
@@ -805,17 +831,9 @@ async function aprovarSolicitacao(solicitacao, tipo) {
     await usuarioService.aprovarAcesso(solicitacao.id, tipoParaEnum[tipo])
     mostrarSnackbar(`Solicitação aprovada como ${tipo}!`, 'success')
     
-    // Se for aluno, perguntar se quer adicionar a uma turma
     if (tipo === 'Aluno') {
-      await new Promise(resolve => {
-        setTimeout(() => {
-          const dialogConfirm = confirm('Deseja adicionar este aluno a uma turma?')
-          if (dialogConfirm) {
-            abrirDialogAdicionarTurma(solicitacao)
-          }
-          resolve()
-        }, 500)
-      })
+      alunoAprovado.value = solicitacao
+      dialogConfirmarAdicionar.value = true
     }
     
     carregarSolicitacoesPendentes()
@@ -838,6 +856,11 @@ async function rejeitarSolicitacao(solicitacao) {
       mostrarSnackbar('Erro ao rejeitar solicitação', 'error')
     }
   }
+}
+
+function prosseguirParaAdicionarTurma() {
+  dialogConfirmarAdicionar.value = false
+  abrirDialogAdicionarTurma(alunoAprovado.value)
 }
 
 function formatarData(data) {

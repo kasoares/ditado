@@ -578,6 +578,34 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog de Confirmação de Remoção de Membro -->
+    <v-dialog v-model="dialogRemoverMembro" max-width="400">
+      <v-card>
+        <v-card-title class="bg-red-lighten-5 pa-4">
+          <v-icon color="error" class="mr-2">mdi-alert</v-icon>
+          Confirmar Remoção
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-2">
+            Tem certeza que deseja remover <strong>{{ membroSelecionado?.nome }}</strong> da turma?
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn variant="text" @click="dialogRemoverMembro = false">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="error"
+            variant="flat"
+            @click="confirmarRemocaoMembro"
+          >
+            Remover
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
@@ -616,10 +644,12 @@ const formDados = ref({
 const dialogFormulario = ref(false)
 const dialogVisualizar = ref(false)
 const dialogDelete = ref(false)
+const dialogRemoverMembro = ref(false)
 const editando = ref(false)
 const abaSelecionada = ref('alunos')
 
 const turmaSelecionada = ref(null)
+const membroSelecionado = ref(null)
 const membros = ref([])
 const ditadosTurma = ref([])
 const solicitacoesPendentes = ref([])
@@ -809,21 +839,26 @@ async function confirmarDelecao() {
   }
 }
 
-async function removerMembro(membro) {
-  if (confirm(`Deseja remover ${membro.nome} da turma?`)) {
-    try {
-      // Remover o aluno da lista e atualizar
-      const alunosIds = turmaSelecionada.value.alunos
-        .map(a => a.id)
-        .filter(id => id !== membro.id)
-      
-      await turmaService.atualizar(turmaSelecionada.value.id, { alunosIds })
-      await carregarDetalhesTurma(turmaSelecionada.value.id)
-      mostrarSnackbar('Aluno removido da turma', 'success')
-    } catch (erro) {
-      console.error('Erro ao remover membro:', erro)
-      mostrarSnackbar('Erro ao remover aluno', 'error')
-    }
+function removerMembro(membro) {
+  membroSelecionado.value = membro
+  dialogRemoverMembro.value = true
+}
+
+async function confirmarRemocaoMembro() {
+  try {
+    // Remover o aluno da lista e atualizar
+    const alunosIds = turmaSelecionada.value.alunos
+      .map(a => a.id)
+      .filter(id => id !== membroSelecionado.value.id)
+    
+    await turmaService.atualizar(turmaSelecionada.value.id, { alunosIds })
+    await carregarDetalhesTurma(turmaSelecionada.value.id)
+    mostrarSnackbar('Aluno removido da turma', 'success')
+  } catch (erro) {
+    console.error('Erro ao remover membro:', erro)
+    mostrarSnackbar('Erro ao remover aluno', 'error')
+  } finally {
+    dialogRemoverMembro.value = false
   }
 }
 
