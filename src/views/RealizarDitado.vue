@@ -502,7 +502,7 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   min-width: 60px;
   max-width: 200px;
   width: auto;
-  height: 2.5rem;
+  height: 2.2rem;
   text-align: center;
   outline: none;
   transition: border-color 0.3s;
