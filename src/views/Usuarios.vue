@@ -218,7 +218,7 @@
                           </template>
                           <v-list density="compact">
                             <v-list-item
-                              v-for="tipo in ['Aluno', 'Professor']"
+                              v-for="tipo in ['Aluno', 'Professor','Administrador']"
                               :key="tipo"
                               @click="aprovarSolicitacao(solicitacao, tipo)"
                             >
@@ -825,7 +825,9 @@ async function aprovarSolicitacao(solicitacao, tipo) {
   try {
     const tipoParaEnum = {
       'Aluno': 3,
-      'Professor': 2
+      'Professor': 2,
+      'Administrador': 1
+
     }
     
     await usuarioService.aprovarAcesso(solicitacao.id, tipoParaEnum[tipo])
