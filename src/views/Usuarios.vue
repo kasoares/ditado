@@ -702,7 +702,13 @@ async function salvarUsuario() {
         dadosAtualizar.senhaNova = formDados.value.senhaNova
       }
 
+      // Se o tipo foi alterado, incluir no payload
+      if (formDados.value.tipo !== usuarioEditando.value.tipo) {
+        dadosAtualizar.tipo = tipoParaNumero[formDados.value.tipo]
+      }
+
       await usuarioService.atualizar(usuarioEditando.value.id, dadosAtualizar)
+      
       mostrarSnackbar('Usuário atualizado com sucesso!', 'success')
     } else {
       // Para criação, usar o schema CriarUsuarioRequest
