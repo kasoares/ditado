@@ -703,13 +703,18 @@ async function salvarUsuario() {
       }
 
       // Se o tipo foi alterado, incluir no payload
-      if (formDados.value.tipo !== usuarioEditando.value.tipo) {
+      const tipoAlterado = formDados.value.tipo !== usuarioEditando.value.tipo
+      if (tipoAlterado) {
         dadosAtualizar.tipo = tipoParaNumero[formDados.value.tipo]
       }
 
       await usuarioService.atualizar(usuarioEditando.value.id, dadosAtualizar)
       
-      mostrarSnackbar('Usuário atualizado com sucesso!', 'success')
+      if (tipoAlterado) {
+        mostrarSnackbar('Usuário atualizado com sucesso! O usuário precisará relogar para as novas permissões terem efeito.', 'success')
+      } else {
+        mostrarSnackbar('Usuário atualizado com sucesso!', 'success')
+      }
     } else {
       // Para criação, usar o schema CriarUsuarioRequest
       const dadosCriar = {
