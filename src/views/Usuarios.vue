@@ -134,23 +134,25 @@
                     </v-chip>
                   </td>
                   <td>
-                    <div class="d-flex justify-center gap-1">
-                      <!-- Adicionar à turma - apenas para Alunos -->
+                    <div class="d-flex justify-center gap-1" style="min-width: 120px;">
+                      <!-- Adicionar à turma - apenas para Alunos (visível para Admin e Professor) -->
                       <v-btn
                         v-if="usuario.tipo === 'Aluno'"
-                        icon="mdi-school-plus"
+                        icon="mdi-account-plus"
                         size="small"
-                        variant="text"
+                        variant="tonal"
                         color="success"
                         title="Adicionar à turma"
                         @click="abrirDialogAdicionarTurma(usuario)"
                       />
+                      <!-- Espaçador invisível para manter alinhamento quando não é Aluno -->
+                      <div v-else style="width: 36px;"></div>
                       <!-- Editar - Admin pode editar qualquer um, Professor só pode editar Alunos -->
                       <v-btn
                         v-if="authStore.ehAdministrador || (authStore.ehProfessor && usuario.tipo === 'Aluno')"
                         icon="mdi-pencil"
                         size="small"
-                        variant="text"
+                        variant="tonal"
                         color="primary"
                         @click="abrirDialogEditar(usuario)"
                       />
@@ -159,7 +161,7 @@
                         v-if="authStore.ehAdministrador"
                         icon="mdi-delete"
                         size="small"
-                        variant="text"
+                        variant="tonal"
                         color="error"
                         @click="confirmarExclusao(usuario)"
                       />
