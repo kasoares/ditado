@@ -196,7 +196,7 @@ const headers = [
   { title: 'Descrição', key: 'descricao' },
   { title: 'Palavras Omitidas', key: 'palavrasOmitidas', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', sortable: false, align: 'center' }
+  { title: 'Ações', key: 'acoes', sortable: false }
 ]
 
 const opcoesOrdenacao = [

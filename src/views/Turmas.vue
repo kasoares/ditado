@@ -675,7 +675,7 @@ const headers = [
   { title: 'Série', key: 'serie', align: 'center' },
   { title: 'Alunos', key: 'totalAlunos', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', sortable: false, align: 'center' }
+  { title: 'Ações', key: 'acoes', sortable: false }
 ]
 
 const regras = {

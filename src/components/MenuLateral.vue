@@ -23,7 +23,7 @@
         {{ authStore.usuario?.nome || 'Administrador Temporário' }}
       </v-list-item-title>
       <v-list-item-subtitle class="text-grey-lighten-1 text-body-2">
-        {{ authStore.usuario?.email || 'admin@sga.com' }}
+        {{ authStore.usuario?.login || 'admin@sga.com' }}
       </v-list-item-subtitle>
     </v-list-item>
 

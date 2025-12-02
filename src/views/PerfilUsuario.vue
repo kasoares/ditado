@@ -215,7 +215,7 @@ onMounted(() => {
   if (authStore.usuario) {
     dadosUsuario.value = {
       nome: authStore.usuario.nome,
-      email: authStore.usuario.email
+      email: authStore.usuario.login
     }
   }
 })
