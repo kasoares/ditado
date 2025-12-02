@@ -7,17 +7,6 @@
           <v-icon size="30" class="mr-2">mdi-book-open-page-variant</v-icon>
           <span class="text-h5 font-weight-bold">Ditado</span>
         </div>
-        
-        <div class="d-flex align-center gap-4">
-          <span class="text-body-1">Bem-vindo</span>
-          <v-btn
-            variant="outlined"
-            color="primary"
-            prepend-icon="mdi-help-circle-outline"
-          >
-            Ajuda
-          </v-btn>
-        </div>
       </v-container>
     </v-app-bar>
 

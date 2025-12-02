@@ -10,17 +10,6 @@
     </v-toolbar-title>
 
     <v-spacer></v-spacer>
-
-    <div class="d-flex align-center gap-3 mr-4">
-      <v-btn
-        variant="outlined"
-        color="primary"
-        prepend-icon="mdi-help-circle-outline"
-        class="text-none"
-      >
-        Ajuda
-      </v-btn>
-    </div>
   </v-app-bar>
 </template>
 

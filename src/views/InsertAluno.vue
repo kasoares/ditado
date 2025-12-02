@@ -130,6 +130,7 @@ const router = useRouter()
 const route = useRoute()
 
 const turmaId = route.params.turmaId
+const turma = ref(null)
 const alunos = ref([])
 const alunosJaAdicionados = ref([])
 const selecionados = ref([])
@@ -164,8 +165,8 @@ async function carregarDados() {
   carregando.value = true
   try {
     // Carregar dados da turma
-    const turma = await turmaService.buscarPorId(turmaId)
-    alunosJaAdicionados.value = turma.alunosIds || []
+    turma.value = await turmaService.buscarPorId(turmaId)
+    alunosJaAdicionados.value = turma.value.alunosIds || []
 
     // Carregar todos os alunos (tipo = 'Aluno')
     const todosOsUsuarios = await usuarioService.listarTodos()
@@ -196,7 +197,7 @@ async function salvarAlunos() {
     await turmaService.atualizar(turmaId, {
       alunosIds: selecionados.value
     })
-    mostrarSnackbar('Alunos adicionados com sucesso!', 'success')
+    mostrarSnackbar(`Alunos salvos na ${turma.value?.nome} com sucesso!`, 'success')
     setTimeout(() => {
       router.push('/turmas')
     }, 1500)

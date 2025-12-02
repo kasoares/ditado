@@ -227,6 +227,27 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog de Validação de Marcadores -->
+    <v-dialog v-model="dialogValidacaoMarcadores" max-width="400">
+      <v-card>
+        <v-card-title class="bg-amber-lighten-5 pa-4">
+          <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+          Aviso
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-2">
+            O texto do ditado deve conter pelo menos uma palavra entre colchetes. Exemplo: [palavra].
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-spacer></v-spacer>
+          <v-btn color="warning" variant="flat" @click="dialogValidacaoMarcadores = false">
+            Entendi
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -256,6 +277,7 @@ const salvando = ref(false)
 const carregando = ref(false)
 const erroForm = ref(null)
 const dialogSair = ref(false)
+const dialogValidacaoMarcadores = ref(false)
 const alteracoesNaoSalvas = ref(false)
 
 // Gravação
@@ -398,6 +420,12 @@ async function salvarDitado() {
   // Validar campos obrigatórios manualmente
   if (!formDados.value.titulo || !formDados.value.textoComMarcacoes) {
     mostrarSnackbar('Por favor, preencha o título e o ditado', 'warning')
+    return
+  }
+
+  // Validar se o texto com marcações contém pelo menos uma palavra entre colchetes
+  if (!/\[.*?\]/.test(formDados.value.textoComMarcacoes)) {
+    dialogValidacaoMarcadores.value = true
     return
   }
 
