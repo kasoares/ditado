@@ -13,6 +13,7 @@
             </p>
           </div>
           <v-btn
+            v-if="authStore.ehAdministrador"
             color="primary"
             prepend-icon="mdi-account-plus"
             class="text-none"
@@ -134,7 +135,9 @@
                   </td>
                   <td>
                     <div class="d-flex justify-center gap-1">
+                      <!-- Adicionar à turma - apenas para Alunos -->
                       <v-btn
+                        v-if="usuario.tipo === 'Aluno'"
                         icon="mdi-school-plus"
                         size="small"
                         variant="text"
@@ -142,14 +145,18 @@
                         title="Adicionar à turma"
                         @click="abrirDialogAdicionarTurma(usuario)"
                       />
+                      <!-- Editar - Admin pode editar qualquer um, Professor só pode editar Alunos -->
                       <v-btn
+                        v-if="authStore.ehAdministrador || (authStore.ehProfessor && usuario.tipo === 'Aluno')"
                         icon="mdi-pencil"
                         size="small"
                         variant="text"
                         color="primary"
                         @click="abrirDialogEditar(usuario)"
                       />
+                      <!-- Excluir - apenas Admin -->
                       <v-btn
+                        v-if="authStore.ehAdministrador"
                         icon="mdi-delete"
                         size="small"
                         variant="text"
@@ -218,7 +225,7 @@
                           </template>
                           <v-list density="compact">
                             <v-list-item
-                              v-for="tipo in ['Aluno', 'Professor','Administrador']"
+                              v-for="tipo in tiposAprovacao"
                               :key="tipo"
                               @click="aprovarSolicitacao(solicitacao, tipo)"
                             >
@@ -293,7 +300,7 @@
                 <label class="text-body-2 text-grey-darken-2 mb-2 d-block">Tipo de usuário</label>
                 <v-select
                   v-model="formDados.tipo"
-                  :items="tiposUsuario"
+                  :items="tiposUsuarioFiltrados"
                   item-title="title"
                   item-value="value"
                   variant="outlined"
@@ -521,6 +528,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { usuarioService } from '@/services/usuarioService'
 import { turmaService } from '@/services/turmaService'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 const usuarios = ref([])
 const solicitacoesPendentes = ref([])
@@ -537,6 +547,22 @@ const tiposUsuario = [
   { title: 'Professor', value: 'Professor' },
   { title: 'Aluno', value: 'Aluno' }
 ]
+
+// Tipos disponíveis no formulário - Professor não pode definir como Admin
+const tiposUsuarioFiltrados = computed(() => {
+  if (authStore.ehAdministrador) {
+    return tiposUsuario
+  }
+  return tiposUsuario.filter(t => t.value !== 'Administrador')
+})
+
+// Tipos disponíveis para aprovação - Professor não pode aprovar como Admin
+const tiposAprovacao = computed(() => {
+  if (authStore.ehAdministrador) {
+    return ['Aluno', 'Professor', 'Administrador']
+  }
+  return ['Aluno', 'Professor']
+})
 
 const tipoParaNumero = {
   'Administrador': 1,

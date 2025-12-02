@@ -39,8 +39,8 @@
         class="menu-item mb-2 rounded-lg"
       ></v-list-item>
 
-      <!-- Menu Administrador -->
-      <template v-if="authStore.ehAdministrador">
+      <!-- Menu Professor e Administrador -->
+      <template v-if="authStore.ehProfessor || authStore.ehAdministrador">
         <v-list-item
           prepend-icon="mdi-account-multiple"
           title="Usuários"
@@ -48,10 +48,7 @@
           to="/usuarios"
           class="menu-item mb-2 rounded-lg"
         ></v-list-item>
-      </template>
 
-      <!-- Menu Professor e Administrador -->
-      <template v-if="authStore.ehProfessor || authStore.ehAdministrador">
         <v-list-item
           prepend-icon="mdi-file-document"
           title="Ditados"

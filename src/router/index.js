@@ -105,7 +105,7 @@ const routes = [
         path: '/usuarios',
         name: 'Usuarios',
         component: () => import('@/views/Usuarios.vue'),
-        meta: { requerTipo: 'Administrador' }
+        meta: { requerTipo: ['Professor', 'Administrador'] }
       }
     ]
   }
