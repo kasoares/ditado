@@ -24,6 +24,13 @@
               </v-col>
               <v-col cols="12" sm="4" md="3" class="d-flex align-center justify-end" style="gap: 1rem;">
                 <v-btn
+                  variant="outlined"
+                  @click="voltar"
+                  class="text-none"
+                >
+                  Cancelar
+                </v-btn>
+                <v-btn
                   color="success"
                   :disabled="salvando"
                   :loading="salvando"
@@ -32,13 +39,6 @@
                   prepend-icon="mdi-check"
                 >
                   Salvar
-                </v-btn>
-                <v-btn
-                  variant="outlined"
-                  @click="voltar"
-                  class="text-none"
-                >
-                  Cancelar
                 </v-btn>
               </v-col>
             </v-row>

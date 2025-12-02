@@ -98,16 +98,6 @@
           <v-row>
             <v-col cols="12" class="d-flex flex-column flex-sm-row justify-end gap-2">
               <v-btn
-                color="error"
-                variant="outlined"
-                @click="abrirDialogExclusao"
-                class="text-none"
-                prepend-icon="mdi-delete"
-              >
-                Excluir Conta
-              </v-btn>
-              
-              <v-btn
                 type="submit"
                 color="primary"
                 :loading="carregando"

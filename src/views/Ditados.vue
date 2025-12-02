@@ -26,8 +26,6 @@
     <!-- Filtro e Busca -->
     <v-card class="mb-6" elevation="1">
       <v-card-text class="pa-6">
-        <v-row>
-          <v-col cols="12" md="8">
             <v-text-field
               v-model="pesquisa"
               prepend-inner-icon="mdi-magnify"
@@ -38,18 +36,6 @@
               clearable
               hide-details
             />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-select
-              v-model="ordenacao"
-              :items="opcoesOrdenacao"
-              label="Ordenar por"
-              variant="outlined"
-              density="comfortable"
-              @update:model-value="filtrarDitados"
-            />
-          </v-col>
-        </v-row>
       </v-card-text>
     </v-card>
 
