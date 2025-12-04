@@ -25,7 +25,6 @@ const authStore = useAuthStore()
 
 const tituloPagina = computed(() => {
   const titulos = {
-    'Home': 'Home',
     'Perfil': 'Editar Perfil',
     'Usuarios': 'Gerenciar Usuários',
     'Ditados': 'Ditados',
@@ -33,7 +32,7 @@ const tituloPagina = computed(() => {
     'MinhasTurmas': 'Minhas Turmas',
     'CadastroDitado': 'Cadastro de Ditado'
   }
-  return titulos[route.name] || 'Sistema de Gestão'
+  return titulos[route.name] || 'Início'
 })
 </script>
 

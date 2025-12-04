@@ -4,7 +4,7 @@
     <v-card class="mb-4 mb-md-6" elevation="1">
       <v-card-text class="pa-6 pa-md-8">
         <h1 class="text-h5 text-md-h4 font-weight-bold mb-2 mb-md-3">
-          Bem-vindo ao Sistema de Gestão
+          Bem-vindo ao Ditado
         </h1>
         <p class="text-body-2 text-md-body-1 text-grey-darken-1">
           Selecione uma opção no menu lateral para começar.
