@@ -140,7 +140,7 @@
                         v-if="usuario.tipo === 'Aluno'"
                         icon="mdi-account-plus"
                         size="small"
-                        variant="tonal"
+                        variant="text"
                         color="success"
                         title="Adicionar à turma"
                         @click="abrirDialogAdicionarTurma(usuario)"
@@ -152,7 +152,7 @@
                         v-if="authStore.ehAdministrador || (authStore.ehProfessor && usuario.tipo === 'Aluno')"
                         icon="mdi-pencil"
                         size="small"
-                        variant="tonal"
+                        variant="text"
                         color="primary"
                         @click="abrirDialogEditar(usuario)"
                       />
@@ -161,7 +161,7 @@
                         v-if="authStore.ehAdministrador"
                         icon="mdi-delete"
                         size="small"
-                        variant="tonal"
+                        variant="text"
                         color="error"
                         @click="confirmarExclusao(usuario)"
                       />
