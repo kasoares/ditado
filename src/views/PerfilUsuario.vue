@@ -30,6 +30,9 @@
                 density="comfortable"
                 :rules="[regras.obrigatorio]"
                 hide-details="auto"
+                :disabled="authStore.ehAluno"
+                :hint="authStore.ehAluno ? 'Para alterar seu nome, peça para um professor ou administrador' : ''"
+                :persistent-hint="authStore.ehAluno"
               />
             </v-col>
 
