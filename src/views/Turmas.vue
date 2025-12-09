@@ -363,16 +363,6 @@
 
             <!-- Aba Ditados -->
             <v-window-item value="ditados">
-              <div class="mb-4">
-                <v-btn
-                  color="success"
-                  prepend-icon="mdi-plus"
-                  size="small"
-                  @click="abrirDialogAdicionarDitado"
-                >
-                  Adicionar Ditado
-                </v-btn>
-              </div>
               <div v-if="ditadosTurma.length > 0">
                 <v-list>
                   <v-list-item
@@ -388,15 +378,15 @@
                       <div>
                         {{ calcularPalavrasOmitidas(ditado) }} palavras
                       </div>
-                      <div v-if="ditado.categoriaIds && ditado.categoriaIds.length > 0" class="d-flex gap-1 flex-wrap mt-1">
+                      <div v-if="ditado.categorias && ditado.categorias.length > 0" class="d-flex gap-1 flex-wrap mt-1">
                         <v-chip
-                          v-for="catId in ditado.categoriaIds"
-                          :key="catId"
+                          v-for="categoria in ditado.categorias"
+                          :key="categoria.id"
                           size="x-small"
                           variant="outlined"
                           color="secondary"
                         >
-                          {{ getNomeCategoria(catId) }}
+                          {{ categoria.nome }}
                         </v-chip>
                       </div>
                     </v-list-item-subtitle>
@@ -466,51 +456,6 @@
             </v-window-item>
           </v-window>
         </v-card-text>
-      </v-card>
-    </v-dialog>
-
-    <!-- Dialog Adicionar Ditados à Turma -->
-    <v-dialog v-model="dialogAdicionarDitado" max-width="600" persistent @keydown.esc="fecharDialogAdicionarDitado">
-      <v-card>
-        <v-card-title class="bg-success text-white pa-4">
-          <v-icon class="mr-2">mdi-file-document-plus</v-icon>
-          Adicionar Ditados à Turma
-        </v-card-title>
-
-        <v-card-text class="pa-6">
-          <p class="text-body-2 mb-4">
-            Selecione os ditados que deseja adicionar à turma {{ turmaSelecionada?.nome }}
-          </p>
-
-          <v-autocomplete
-            v-model="ditadosSelecionados"
-            :items="ditadosDisponiveis"
-            item-title="titulo"
-            item-value="id"
-            label="Ditados"
-            placeholder="Buscar ditado..."
-            chips
-            closable-chips
-            multiple
-            variant="outlined"
-            density="comfortable"
-          />
-        </v-card-text>
-
-        <v-card-actions class="pa-4 bg-grey-lighten-5">
-          <v-btn variant="text" @click="fecharDialogAdicionarDitado">
-            Cancelar
-          </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="success"
-            variant="flat"
-            :loading="adicionandoDitados"
-            @click="confirmarAdicionarDitados"
-          >
-            Adicionar
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -667,10 +612,6 @@ const membroSelecionado = ref(null)
 const membros = ref([])
 const ditadosTurma = ref([])
 const solicitacoesPendentes = ref([])
-const ditadosDisponiveis = ref([])
-const ditadosSelecionados = ref([])
-const dialogAdicionarDitado = ref(false)
-const adicionandoDitados = ref(false)
 const alunosDisponiveis = ref([])
 const alunosSelecionados = ref([])
 const dialogAdicionarAlunos = ref(false)
@@ -901,9 +842,12 @@ async function confirmarRemocaoMembro() {
 async function removerDitado(ditado) {
   if (confirm(`Deseja remover o ditado "${ditado.titulo}" da turma?`)) {
     try {
-      // Nota: Essa operação pode não estar disponível na API
-      // Aguardando clarificação sobre como remover ditados de uma turma
-      mostrarSnackbar('Função ainda não implementada na API', 'warning')
+      await turmaService.removerAtribuicaoDitado(turmaSelecionada.value.id, ditado.id)
+      
+      // Remover da lista local
+      ditadosTurma.value = ditadosTurma.value.filter(d => d.id !== ditado.id)
+      
+      mostrarSnackbar(`Ditado "${ditado.titulo}" removido da turma com sucesso`, 'success')
     } catch (erro) {
       console.error('Erro ao remover ditado:', erro)
       mostrarSnackbar('Erro ao remover ditado', 'error')
@@ -955,46 +899,6 @@ function mostrarSnackbar(mensagem, cor = 'success') {
     show: true,
     mensagem,
     color: cor
-  }
-}
-
-async function carregarDitadosDisponiveis() {
-  try {
-    const ditados = await ditadoService.listarTodos()
-    ditadosDisponiveis.value = ditados || []
-  } catch (erro) {
-    console.error('Erro ao carregar ditados disponíveis:', erro)
-    ditadosDisponiveis.value = []
-  }
-}
-
-function abrirDialogAdicionarDitado() {
-  ditadosSelecionados.value = []
-  dialogAdicionarDitado.value = true
-}
-
-function fecharDialogAdicionarDitado() {
-  dialogAdicionarDitado.value = false
-  ditadosSelecionados.value = []
-}
-
-async function confirmarAdicionarDitados() {
-  if (!turmaSelecionada.value || ditadosSelecionados.value.length === 0) {
-    mostrarSnackbar('Selecione pelo menos um ditado', 'warning')
-    return
-  }
-
-  adicionandoDitados.value = true
-  try {
-    // Nota: A API pode não suportar diretamente a adição de ditados a uma turma
-    // Esse recurso ainda precisa ser clarificado
-    mostrarSnackbar('Função ainda não implementada na API', 'warning')
-    fecharDialogAdicionarDitado()
-  } catch (erro) {
-    console.error('Erro ao adicionar ditados:', erro)
-    mostrarSnackbar('Erro ao adicionar ditados', 'error')
-  } finally {
-    adicionandoDitados.value = false
   }
 }
 
