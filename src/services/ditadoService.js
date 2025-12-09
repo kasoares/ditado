@@ -31,6 +31,26 @@ export const ditadoService = {
     }
   },
 
+  async atualizar(id, dados) {
+    try {
+      const response = await api.put(`/Ditados/${id}`, dados)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao atualizar ditado:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  async deletar(id) {
+    try {
+      const response = await api.delete(`/Ditados/${id}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao deletar ditado:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
   async buscarParaRealizar(id) {
     try {
       const response = await api.get(`/Ditados/${id}/realizar`)

@@ -6,6 +6,12 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null)
   const usuario = ref(JSON.parse(localStorage.getItem('usuario') || 'null'))
 
+  if (token.value) {
+    console.log('[Auth] Token carregado do localStorage:', token.value.substring(0, 20) + '...')
+  } else {
+    console.warn('[Auth] ⚠️ Nenhum token no localStorage')
+  }
+
   const estaAutenticado = computed(() => !!token.value)
   const tipoUsuario = computed(() => usuario.value?.tipo)
   const ehAdministrador = computed(() => tipoUsuario.value === 'Administrador')

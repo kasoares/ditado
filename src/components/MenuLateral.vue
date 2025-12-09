@@ -10,7 +10,7 @@
   >
     <!-- Perfil do usuário -->
     <v-list-item
-      class="perfil-usuario px-4 py-4"
+      class="perfil-usuario px-4 py-2"
       :class="{ 'rail-perfil': rail }"
     >
       <template v-slot:prepend>
@@ -58,6 +58,14 @@
         ></v-list-item>
 
         <v-list-item
+          prepend-icon="mdi-tag-multiple"
+          title="Categorias"
+          value="categorias"
+          to="/categorias"
+          class="menu-item mb-2 rounded-lg"
+        ></v-list-item>
+
+        <v-list-item
           prepend-icon="mdi-school"
           title="Turmas"
           value="turmas"
@@ -81,6 +89,14 @@
           title="Minhas Turmas"
           value="minhas-turmas"
           to="/minhas-turmas"
+          class="menu-item mb-2 rounded-lg"
+        ></v-list-item>
+
+        <v-list-item
+          prepend-icon="mdi-history"
+          title="Minhas Tentativas"
+          value="tentativas"
+          to="/tentativas"
           class="menu-item mb-2 rounded-lg"
         ></v-list-item>
       </template>

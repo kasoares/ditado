@@ -385,7 +385,20 @@
                     </template>
                     <v-list-item-title>{{ ditado.titulo }}</v-list-item-title>
                     <v-list-item-subtitle>
-                      {{ calcularPalavrasOmitidas(ditado) }} palavras
+                      <div>
+                        {{ calcularPalavrasOmitidas(ditado) }} palavras
+                      </div>
+                      <div v-if="ditado.categoriaIds && ditado.categoriaIds.length > 0" class="d-flex gap-1 flex-wrap mt-1">
+                        <v-chip
+                          v-for="catId in ditado.categoriaIds"
+                          :key="catId"
+                          size="x-small"
+                          variant="outlined"
+                          color="secondary"
+                        >
+                          {{ getNomeCategoria(catId) }}
+                        </v-chip>
+                      </div>
                     </v-list-item-subtitle>
                     <template v-slot:append>
                       <v-btn
@@ -620,6 +633,7 @@ import { useAuthStore } from '@/stores/auth'
 import { turmaService } from '@/services/turmaService'
 import { ditadoService } from '@/services/ditadoService'
 import { usuarioService } from '@/services/usuarioService'
+import { categoriaService } from '@/services/categoriaService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -663,6 +677,8 @@ const dialogAdicionarAlunos = ref(false)
 const adicionandoAlunos = ref(false)
 const todosOsAlunos = ref([])
 
+const categorias = ref([])
+
 const snackbar = ref({
   show: false,
   mensagem: '',
@@ -683,15 +699,27 @@ const regras = {
 }
 
 onMounted(async () => {
-  await carregarTurmas()
-  await carregarDitadosDisponiveis()
+  await Promise.all([
+    carregarTurmas(),
+    carregarDitadosDisponiveis(),
+    carregarCategorias()
+  ])
   await carregarTodosAlunos()
 })
 
 async function carregarTurmas() {
   carregando.value = true
   try {
-    const dados = await turmaService.listarTodas(true)
+    let dados = []
+    
+    // Alunos veem apenas suas turmas
+    if (authStore.ehAluno) {
+      dados = await turmaService.listarDosAlunos(authStore.usuario.id)
+    } else {
+      // Professores veem todas as turmas (ou só as deles se não for admin)
+      dados = await turmaService.listarTodas(true)
+    }
+    
     turmas.value = dados
     filtrarTurmas()
   } catch (erro) {
@@ -715,6 +743,14 @@ function filtrarTurmas() {
   }
 
   turmasFiltradas.value = resultado
+}
+
+async function carregarCategorias() {
+  try {
+    categorias.value = await categoriaService.listarTodas()
+  } catch (erro) {
+    console.error('Erro ao carregar categorias:', erro)
+  }
 }
 
 function abrirFormulario() {
@@ -1016,6 +1052,11 @@ async function confirmarAdicionarAlunos() {
   } finally {
     adicionandoAlunos.value = false
   }
+}
+
+function getNomeCategoria(categoriaId) {
+  const categoria = categorias.value.find(c => c.id === categoriaId)
+  return categoria ? categoria.nome : 'Desconhecida'
 }
 </script>
 

@@ -19,11 +19,33 @@
         <span class="text-h6 font-weight-bold">Ditados Disponíveis</span>
         <v-spacer></v-spacer>
         <v-chip color="primary" variant="flat">
-          {{ ditados.length }} {{ ditados.length === 1 ? 'ditado' : 'ditados' }}
+          {{ ditadosFiltrados.length }} {{ ditadosFiltrados.length === 1 ? 'ditado' : 'ditados' }}
         </v-chip>
       </v-card-title>
 
       <v-card-text class="pa-6">
+        <!-- Filtro de Categorias -->
+        <div class="mb-6">
+          <label class="text-body-2 font-weight-bold text-grey-darken-2 mb-2 d-block">
+            Filtrar por categoria
+          </label>
+          <v-select
+            v-model="filtroCategoria"
+            :items="categorias"
+            item-title="nome"
+            item-value="id"
+            placeholder="Todas as categorias"
+            variant="outlined"
+            density="comfortable"
+            :loading="carregandoCategorias"
+            multiple
+            chips
+            clearable
+            hide-details="auto"
+            @update:model-value="filtrarDitados"
+          />
+        </div>
+
         <!-- Loading -->
         <div v-if="carregando" class="text-center py-12">
           <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
@@ -36,9 +58,15 @@
           <p class="text-body-1 text-grey mt-4">Nenhum ditado disponível no momento</p>
         </div>
 
+        <!-- Nenhum resultado após filtro -->
+        <div v-else-if="ditadosFiltrados.length === 0" class="text-center py-12">
+          <v-icon size="64" color="grey-lighten-1">mdi-filter-off</v-icon>
+          <p class="text-body-1 text-grey mt-4">Nenhum ditado encontrado com essa categoria</p>
+        </div>
+
         <!-- Lista de ditados -->
         <v-row v-else>
-          <v-col v-for="ditado in ditados" :key="ditado.id" cols="12" md="6">
+          <v-col v-for="ditado in ditadosFiltrados" :key="ditado.id" cols="12" md="6">
             <v-card elevation="2" class="ditado-card" hover @click="iniciarDitado(ditado.id)">
               <v-card-text class="pa-6">
                 <div class="d-flex align-center mb-4">
@@ -47,9 +75,21 @@
                   </v-avatar>
                   <div class="flex-grow-1">
                     <h3 class="text-h6 font-weight-bold mb-1">{{ ditado.titulo }}</h3>
-                    <p class="text-body-2 text-grey-darken-1 mb-0">
+                    <p class="text-body-2 text-grey-darken-1 mb-2">
                       {{ ditado.descricao || 'Clique para iniciar o ditado' }}
                     </p>
+                    <!-- Categorias -->
+                    <div v-if="ditado.categorias && ditado.categorias.length > 0" class="d-flex gap-1 flex-wrap">
+                      <v-chip
+                        v-for="categoria in ditado.categorias"
+                        :key="categoria.id"
+                        size="x-small"
+                        variant="outlined"
+                        color="secondary"
+                      >
+                        {{ categoria.nome }}
+                      </v-chip>
+                    </div>
                   </div>
                 </div>
                 <v-divider class="my-3"></v-divider>
@@ -86,13 +126,20 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { alunoService } from '@/services/alunoService'
+import { categoriaService } from '@/services/categoriaService'
 import { ditadoService } from '@/services/ditadoService'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const ditados = ref([])
+const ditadosFiltrados = ref([])
 const carregando = ref(false)
+const carregandoCategorias = ref(false)
+
+const categorias = ref([])
+const filtroCategoria = ref([])
 
 const snackbar = ref({
   show: false,
@@ -101,20 +148,49 @@ const snackbar = ref({
 })
 
 onMounted(() => {
-  buscarDitados()
+  Promise.all([buscarDitados(), carregarCategorias()])
 })
+
+async function carregarCategorias() {
+  carregandoCategorias.value = true
+  try {
+    categorias.value = await categoriaService.listarTodas()
+  } catch (erro) {
+    console.error('Erro ao carregar categorias:', erro)
+  } finally {
+    carregandoCategorias.value = false
+  }
+}
 
 async function buscarDitados() {
   carregando.value = true
   try {
+    // TESTE: Usar ditadoService para listar TODOS os ditados
     const dados = await ditadoService.listarTodos()
     ditados.value = dados
+    filtrarDitados()
   } catch (erro) {
     console.error('Erro ao carregar ditados:', erro)
     mostrarSnackbar('Erro ao carregar ditados', 'error')
   } finally {
     carregando.value = false
   }
+}
+
+function filtrarDitados() {
+  let resultado = [...ditados.value]
+
+  // Filtrar por categorias se selecionadas
+  if (filtroCategoria.value && filtroCategoria.value.length > 0) {
+    resultado = resultado.filter(ditado =>
+      ditado.categorias && 
+      filtroCategoria.value.every(catId => 
+        ditado.categorias.some(cat => cat.id === catId)
+      )
+    )
+  }
+
+  ditadosFiltrados.value = resultado
 }
 
 function formatarData(data) {
@@ -136,6 +212,11 @@ function mostrarSnackbar(mensagem, cor = 'success') {
     mensagem,
     color: cor
   }
+}
+
+function getNomeCategoria(categoriaId) {
+  const categoria = categorias.value.find(c => c.id === categoriaId)
+  return categoria ? categoria.nome : 'Desconhecida'
 }
 </script>
 

@@ -5,9 +5,9 @@
       <v-card-text class="pa-6">
         <div class="d-flex align-center justify-space-between">
           <div>
-            <h1 class="text-h4 font-weight-bold mb-2">{{ editando ? 'Editar Ditado' : 'Cadastro de Ditados' }}</h1>
+            <h1 class="text-h4 font-weight-bold mb-2">Cadastro de Ditados</h1>
             <p class="text-body-1 text-grey-darken-1">
-              {{ editando ? 'Atualize os dados do ditado' : 'Crie e organize ditados para futuras sessões.' }}
+              Crie e organize ditados para futuras sessões.
             </p>
           </div>
           <v-btn
@@ -27,6 +27,22 @@
     <!-- Formulário de Cadastro -->
     <v-card elevation="1">
       <v-card-text class="pa-6">
+        <!-- Banner de Aviso -->
+        <v-alert
+          type="warning"
+          variant="tonal"
+          class="mb-6"
+          icon="mdi-alert"
+          border="start"
+          border-color="orange"
+        >
+          <v-alert-title class="font-weight-bold mb-2">Atenção!</v-alert-title>
+          <div class="text-body-2">
+            <strong>Ditados não podem ser editados após serem criados.</strong><br>
+            Verifique se todas as informações estão 100% corretas antes de salvar, pois não será possível fazer alterações posteriormente.
+          </div>
+        </v-alert>
+
         <v-form ref="formDitado">
           <v-row>
             <!-- Coluna Esquerda - Detalhes da Palavra -->
@@ -67,6 +83,27 @@
                     />
                   </div>
 
+                  <!-- Categorias -->
+                  <div class="mb-6">
+                    <label class="text-body-2 font-weight-bold text-grey-darken-2 mb-2 d-block">
+                      Categorias
+                    </label>
+                    <v-select
+                      v-model="formDados.categoriaIds"
+                      :items="categorias"
+                      item-title="nome"
+                      item-value="id"
+                      multiple
+                      placeholder="Selecione as categorias para este ditado"
+                      variant="outlined"
+                      density="comfortable"
+                      :loading="carregandoCategorias"
+                      chips
+                      clearable
+                      hide-details="auto"
+                    />
+                  </div>
+
                   <!-- Ditado (Texto com Marcações) -->
                   <div class="mb-4">
                     <label class="text-body-2 font-weight-bold text-grey-darken-2 mb-2 d-block">
@@ -78,7 +115,7 @@
                       variant="outlined"
                       density="comfortable"
                       rows="5"
-                      :rules="[regras.obrigatorio]"
+                      :rules="[regras.obrigatorio, regras.validarColchetes]"
                       hide-details="auto"
                     />
                   </div>
@@ -194,7 +231,7 @@
           :loading="salvando"
           @click="salvarDitado"
         >
-          {{ editando ? 'Atualizar Ditado' : 'Salvar Ditado' }}
+          Salvar Ditado
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -248,6 +285,30 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog de Áudio Obrigatório -->
+    <v-dialog v-model="dialogAudioObrigatorio" max-width="400">
+      <v-card>
+        <v-card-title class="bg-red-lighten-5 pa-4">
+          <v-icon color="error" class="mr-2">mdi-microphone-off</v-icon>
+          Áudio Obrigatório
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-2">
+            <strong>Não é possível criar um ditado sem áudio.</strong>
+          </p>
+          <p class="text-body-2 text-grey-darken-1">
+            Por favor, grave uma áudio do ditado antes de salvar. O áudio é essencial para que os alunos possam realizar a atividade.
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-spacer></v-spacer>
+          <v-btn color="error" variant="flat" @click="dialogAudioObrigatorio = false">
+            Entendi
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -255,6 +316,7 @@
 import { ref, onUnmounted, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ditadoService } from '@/services/ditadoService'
+import { categoriaService } from '@/services/categoriaService'
 
 const router = useRouter()
 const route = useRoute()
@@ -263,12 +325,12 @@ const formDitado = ref(null)
 const audioGravadoPlayer = ref(null)
 
 const ditadoId = computed(() => route.params.id)
-const editando = computed(() => !!ditadoId.value)
 
 const formDados = ref({
   titulo: '',
   descricao: '',
-  textoComMarcacoes: ''
+  textoComMarcacoes: '',
+  categoriaIds: []
 })
 
 let ditadoEmEdicao = null
@@ -278,7 +340,11 @@ const carregando = ref(false)
 const erroForm = ref(null)
 const dialogSair = ref(false)
 const dialogValidacaoMarcadores = ref(false)
+const dialogAudioObrigatorio = ref(false)
 const alteracoesNaoSalvas = ref(false)
+
+const categorias = ref([])
+const carregandoCategorias = ref(false)
 
 // Gravação
 const gravando = ref(false)
@@ -295,63 +361,83 @@ const snackbar = ref({
 })
 
 const regras = {
-  obrigatorio: v => (v !== null && v !== undefined && v !== '') || 'Campo obrigatório'
+  obrigatorio: v => (v !== null && v !== undefined && v !== '') || 'Campo obrigatório',
+  validarColchetes: v => {
+    if (!v || v.trim() === '') return true // Campo vazio será validado por 'obrigatorio'
+    
+    // Verificar se há colchetes
+    const temAbertura = v.includes('[')
+    const temFechamento = v.includes(']')
+    
+    if (!temAbertura && !temFechamento) {
+      return 'O ditado deve conter pelo menos uma palavra entre colchetes. Exemplo: [palavra]'
+    }
+    
+    if (temAbertura && !temFechamento) {
+      return 'Colchete aberto [ sem fechamento. Use: [palavra]'
+    }
+    
+    if (!temAbertura && temFechamento) {
+      return 'Colchete fechado ] sem abertura. Use: [palavra]'
+    }
+    
+    // Verificar se há palavras dentro dos colchetes
+    const regex = /\[([^\[\]]*?)\]/g
+    let match
+    const colchetes = []
+    
+    while ((match = regex.exec(v)) !== null) {
+      const conteudo = match[1]
+      const conteudoTrimmed = conteudo.trim()
+      
+      // Verificar se está vazio
+      if (!conteudoTrimmed) {
+        return 'Não é permitido colchetes vazios. Use: [palavra]'
+      }
+      
+      // Verificar se há espaços dentro dos colchetes
+      if (conteudo !== conteudoTrimmed || conteudoTrimmed.includes(' ')) {
+        return 'Não é permitido espaços nas lacunas. Use: [palavra] e não [palavra ]'
+      }
+      
+      colchetes.push(conteudoTrimmed)
+    }
+    
+    if (colchetes.length === 0) {
+      return 'O ditado deve conter pelo menos uma palavra entre colchetes. Exemplo: [palavra]'
+    }
+    
+    // Verificar se há colchetes desbalanceados
+    let abertas = 0
+    for (let i = 0; i < v.length; i++) {
+      if (v[i] === '[') abertas++
+      if (v[i] === ']') abertas--
+      if (abertas < 0) {
+        return 'Colchetes desbalanceados. Verifique se todos os [ têm ] correspondente'
+      }
+    }
+    if (abertas !== 0) {
+      return 'Colchetes desbalanceados. Verifique se todos os [ têm ] correspondente'
+    }
+    
+    return true
+  }
 }
 
 onMounted(async () => {
-  if (editando.value) {
-    await carregarDitado()
-  }
+  await carregarCategorias()
 })
 
-async function carregarDitado() {
-  carregando.value = true
-  erroForm.value = null
+async function carregarCategorias() {
+  carregandoCategorias.value = true
   try {
-    // Primeira tentativa: buscar do backend
-    try {
-      const ditado = await ditadoService.buscarPorId(ditadoId.value)
-      preencherFormulario(ditado)
-    } catch (erro) {
-      // Se o backend retornar 404, tentar carregar a lista completa e procurar o ditado
-      if (erro.response?.status === 404) {
-        const todosDitados = await ditadoService.listarTodos()
-        const ditadoEncontrado = todosDitados.find(d => d.id == ditadoId.value)
-        
-        if (ditadoEncontrado) {
-          ditadoEmEdicao = ditadoEncontrado
-          preencherFormulario(ditadoEncontrado)
-        } else {
-          throw new Error('Ditado não encontrado na lista')
-        }
-      } else {
-        throw erro
-      }
-    }
+    categorias.value = await categoriaService.listarTodas()
   } catch (erro) {
-    console.error('Erro ao carregar ditado:', erro)
-    const mensagemErro = erro.response?.data?.message || erro.message || 'Erro ao carregar ditado'
-    erroForm.value = mensagemErro
-    mostrarSnackbar(mensagemErro, 'error')
+    console.error('Erro ao carregar categorias:', erro)
+    mostrarSnackbar('Erro ao carregar categorias', 'error')
   } finally {
-    carregando.value = false
+    carregandoCategorias.value = false
   }
-}
-
-function preencherFormulario(ditado) {
-  if (!ditado) {
-    throw new Error('Ditado não encontrado')
-  }
-  ditadoEmEdicao = ditado
-  formDados.value = {
-    titulo: ditado.titulo || '',
-    descricao: ditado.descricao || '',
-    textoComMarcacoes: ditado.textoComMarcacoes || ''
-  }
-  // Resetar o estado de alterações após preencher
-  setTimeout(() => {
-    alteracoesNaoSalvas.value = false
-  }, 100)
 }
 
 // Observar alterações no formulário
@@ -423,15 +509,9 @@ async function salvarDitado() {
     return
   }
 
-  // Validar se o texto com marcações contém pelo menos uma palavra entre colchetes
-  if (!/\[.*?\]/.test(formDados.value.textoComMarcacoes)) {
-    dialogValidacaoMarcadores.value = true
-    return
-  }
-
-  // Validar se há áudio apenas ao criar novo ditado
-  if (!editando.value && !audioGravado.value) {
-    mostrarSnackbar('Por favor, grave um áudio', 'warning')
+  // Validar se há áudio
+  if (!audioGravado.value) {
+    dialogAudioObrigatorio.value = true
     return
   }
 
@@ -442,7 +522,8 @@ async function salvarDitado() {
     const dados = {
       titulo: formDados.value.titulo,
       descricao: formDados.value.descricao || '',
-      textoComMarcacoes: formDados.value.textoComMarcacoes
+      textoComMarcacoes: formDados.value.textoComMarcacoes,
+      categoriaIds: formDados.value.categoriaIds
     }
 
     // Adicionar áudio da gravação
@@ -451,13 +532,8 @@ async function salvarDitado() {
       dados.audioBase64 = base64Audio
     }
 
-    if (editando.value) {
-      await ditadoService.atualizar(ditadoId.value, dados)
-      mostrarSnackbar('Ditado atualizado com sucesso!', 'success')
-    } else {
-      await ditadoService.criar(dados)
-      mostrarSnackbar('Ditado cadastrado com sucesso!', 'success')
-    }
+    await ditadoService.criar(dados)
+    mostrarSnackbar('Ditado cadastrado com sucesso!', 'success')
     
     setTimeout(() => {
       router.push('/ditados')
