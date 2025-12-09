@@ -91,14 +91,6 @@
           to="/minhas-turmas"
           class="menu-item mb-2 rounded-lg"
         ></v-list-item>
-
-        <v-list-item
-          prepend-icon="mdi-history"
-          title="Minhas Tentativas"
-          value="tentativas"
-          to="/tentativas"
-          class="menu-item mb-2 rounded-lg"
-        ></v-list-item>
       </template>
 
       <v-divider class="border-opacity-25 my-3"></v-divider>

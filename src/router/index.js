@@ -91,12 +91,6 @@ const routes = [
         meta: { requerTipo: 'Aluno' }
       },
       {
-        path: '/tentativas',
-        name: 'TentativasAluno',
-        component: () => import('@/views/TentativasAluno.vue'),
-        meta: { requerTipo: 'Aluno' }
-      },
-      {
         path: '/perfil',
         name: 'Perfil',
         component: () => import('@/views/PerfilUsuario.vue')
