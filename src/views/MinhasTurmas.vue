@@ -188,9 +188,21 @@
                   <h4 class="text-h6 font-weight-bold mb-2">
                     {{ ditado.titulo }}
                   </h4>
-                  <p class="text-body-2 text-grey-darken-1 mb-3">
+                  <p class="text-body-2 text-grey-darken-1 mb-2">
                     {{ ditado.descricao || 'Sem descrição' }}
                   </p>
+                  <!-- Categorias -->
+                  <div v-if="ditado.categoriaIds && ditado.categoriaIds.length > 0" class="d-flex gap-1 flex-wrap mb-3">
+                    <v-chip
+                      v-for="catId in ditado.categoriaIds"
+                      :key="catId"
+                      size="x-small"
+                      variant="outlined"
+                      color="secondary"
+                    >
+                      {{ getNomeCategoria(catId) }}
+                    </v-chip>
+                  </div>
                   <v-divider class="my-3"></v-divider>
                   <div class="d-flex align-center gap-2 mb-2">
                     <v-icon size="small" color="info">mdi-format-text</v-icon>
@@ -236,6 +248,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { turmaService } from '@/services/turmaService'
 import { ditadoService } from '@/services/ditadoService'
+import { categoriaService } from '@/services/categoriaService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -244,6 +257,8 @@ const minhasTurmas = ref([])
 const solicitacoesPendentes = ref([])
 const ditadosTurma = ref([])
 const carregando = ref(false)
+
+const categorias = ref([])
 
 const abaAtiva = ref('turmas')
 const dialogDitados = ref(false)
@@ -268,7 +283,8 @@ async function carregarDados() {
   try {
     await Promise.all([
       carregarMinhasTurmas(),
-      carregarSolicitacoesPendentes()
+      carregarSolicitacoesPendentes(),
+      carregarCategorias()
     ])
   } catch (erro) {
     console.error('Erro ao carregar dados:', erro)
@@ -278,7 +294,13 @@ async function carregarDados() {
   }
 }
 
-async function carregarMinhasTurmas() {
+async function carregarCategorias() {
+  try {
+    categorias.value = await categoriaService.listarTodas()
+  } catch (erro) {
+    console.error('Erro ao carregar categorias:', erro)
+  }
+}async function carregarMinhasTurmas() {
   try {
     // Obter o ID do aluno logado atualmente
     const alunoId = authStore.usuario?.id
@@ -344,6 +366,11 @@ function mostrarSnackbar(mensagem, cor = 'success') {
     mensagem,
     color: cor
   }
+}
+
+function getNomeCategoria(categoriaId) {
+  const categoria = categorias.value.find(c => c.id === categoriaId)
+  return categoria ? categoria.nome : 'Desconhecida'
 }
 </script>
 

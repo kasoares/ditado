@@ -29,8 +29,8 @@
               <v-divider class="mb-3"></v-divider>
               <div class="d-flex flex-column gap-2 text-left text-caption text-grey-darken-1">
                 <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-pound</v-icon>
-                  <span>Etiquete por série, tema e dificuldade</span>
+                  <v-icon size="16" class="mr-2">mdi-tag-multiple</v-icon>
+                  <span>Categorize por assunto e nível</span>
                 </div>
                 <div class="d-flex align-center">
                   <v-icon size="16" class="mr-2">mdi-book-open</v-icon>

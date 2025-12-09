@@ -55,12 +55,6 @@ const routes = [
         meta: { requerTipo: ['Professor', 'Administrador'] }
       },
       {
-        path: '/editar-ditado/:id',
-        name: 'EditarDitado',
-        component: () => import('@/views/CadastroDitado.vue'),
-        meta: { requerTipo: ['Professor', 'Administrador'] }
-      },
-      {
         path: '/turmas',
         name: 'Turmas',
         component: () => import('@/views/Turmas.vue'),
@@ -97,9 +91,33 @@ const routes = [
         meta: { requerTipo: 'Aluno' }
       },
       {
+        path: '/tentativas',
+        name: 'TentativasAluno',
+        component: () => import('@/views/TentativasAluno.vue'),
+        meta: { requerTipo: 'Aluno' }
+      },
+      {
         path: '/perfil',
         name: 'Perfil',
         component: () => import('@/views/PerfilUsuario.vue')
+      },
+      {
+        path: '/categorias',
+        name: 'Categorias',
+        component: () => import('@/views/Categorias.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/cadastro-categoria',
+        name: 'CadastroCategoria',
+        component: () => import('@/views/CadastroCategoria.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/editar-categoria/:id',
+        name: 'EditarCategoria',
+        component: () => import('@/views/CadastroCategoria.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
       },
       {
         path: '/usuarios',

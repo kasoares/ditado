@@ -14,6 +14,9 @@ api.interceptors.request.use(
     const authStore = useAuthStore()
     if (authStore.token) {
       config.headers.Authorization = `Bearer ${authStore.token}`
+      console.log('[API] Token enviado para:', config.url)
+    } else {
+      console.warn('[API] ⚠️ Nenhum token disponível para:', config.url)
     }
     return config
   },

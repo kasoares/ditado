@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar elevation="0" color="white" height="70" border="b">
+  <v-app-bar elevation="0" color="white" height="72" border="b">
     <v-app-bar-nav-icon 
       @click="emit('toggle-drawer')"
       class="ml-2"
