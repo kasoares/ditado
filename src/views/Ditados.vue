@@ -128,6 +128,14 @@
         <template v-slot:item.acoes="{ item }">
           <div class="d-flex gap-2">
             <v-btn
+              icon="mdi-school"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Atribuir a uma turma"
+              @click="abrirDialogAtribuirTurma(item)"
+            />
+            <v-btn
               icon="mdi-delete"
               size="small"
               variant="text"
@@ -171,6 +179,58 @@
         </p>
       </div>
     </v-card>
+
+    <!-- Dialog de Atribuição de Ditado a Turma -->
+    <v-dialog v-model="dialogAtribuirTurma" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="bg-primary text-white pa-4">
+          <v-icon class="mr-2">mdi-school</v-icon>
+          Atribuir Ditado a uma Turma
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-body-2 mb-4">
+            Ditado: <strong>{{ ditadoSelecionado?.titulo }}</strong>
+          </p>
+          
+          <v-select
+            v-model="turmaParaAtribuir"
+            :items="turmas"
+            item-title="nome"
+            item-value="id"
+            label="Selecione a turma"
+            placeholder="Escolha uma turma"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            class="mb-4"
+          />
+
+          <v-text-field
+            v-model="dataLimiteAtribuicao"
+            type="date"
+            label="Data limite (opcional)"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn variant="text" @click="fecharDialogAtribuirTurma">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="atribuindoTurma"
+            :disabled="!turmaParaAtribuir"
+            @click="confirmarAtribuicaoTurma"
+          >
+            Atribuir
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
@@ -220,6 +280,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ditadoService } from '@/services/ditadoService'
 import { categoriaService } from '@/services/categoriaService'
+import { turmaService } from '@/services/turmaService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -235,6 +296,13 @@ const dialogDelete = ref(false)
 const deletando = ref(false)
 
 const categorias = ref([])
+
+// Para atribuição de ditado a turma
+const turmas = ref([])
+const dialogAtribuirTurma = ref(false)
+const turmaParaAtribuir = ref(null)
+const dataLimiteAtribuicao = ref('')
+const atribuindoTurma = ref(false)
 
 const snackbar = ref({
   show: false,
@@ -261,7 +329,7 @@ const opcoesOrdenacao = [
 const computedCarregando = computed(() => carregando.value)
 
 onMounted(async () => {
-  await Promise.all([carregarDitados(), carregarCategorias()])
+  await Promise.all([carregarDitados(), carregarCategorias(), carregarTurmas()])
 })
 
 async function carregarCategorias() {
@@ -393,6 +461,57 @@ function mostrarSnackbar(mensagem, cor = 'success') {
     color: cor
   }
 }
+
+async function carregarTurmas() {
+  try {
+    const dados = await turmaService.listarTodas(true) // apenas turmas ativas
+    turmas.value = dados || []
+  } catch (erro) {
+    console.error('Erro ao carregar turmas:', erro)
+    turmas.value = []
+  }
+}
+
+function abrirDialogAtribuirTurma(ditado) {
+  ditadoSelecionado.value = ditado
+  turmaParaAtribuir.value = null
+  dataLimiteAtribuicao.value = ''
+  dialogAtribuirTurma.value = true
+}
+
+function fecharDialogAtribuirTurma() {
+  dialogAtribuirTurma.value = false
+  ditadoSelecionado.value = null
+  turmaParaAtribuir.value = null
+  dataLimiteAtribuicao.value = ''
+}
+
+async function confirmarAtribuicaoTurma() {
+  if (!ditadoSelecionado.value || !turmaParaAtribuir.value) {
+    mostrarSnackbar('Selecione um ditado e uma turma', 'warning')
+    return
+  }
+
+  atribuindoTurma.value = true
+  try {
+    // Converter data para formato ISO se foi fornecida
+    let dataLimite = null
+    if (dataLimiteAtribuicao.value) {
+      dataLimite = new Date(dataLimiteAtribuicao.value).toISOString()
+    }
+
+    await turmaService.atribuirDitado(turmaParaAtribuir.value, ditadoSelecionado.value.id, dataLimite)
+    
+    mostrarSnackbar(`Ditado atribuído à turma com sucesso`, 'success')
+    fecharDialogAtribuirTurma()
+  } catch (erro) {
+    console.error('Erro ao atribuir ditado à turma:', erro)
+    mostrarSnackbar('Erro ao atribuir ditado à turma', 'error')
+  } finally {
+    atribuindoTurma.value = false
+  }
+}
+
 </script>
 
 <style scoped>

@@ -24,16 +24,5 @@ export const alunoService = {
       console.error('Erro ao listar ditados da turma:', erro.response?.data || erro)
       throw erro
     }
-  },
-
-  // LISTAR MINHAS TENTATIVAS EM UM DITADO ESPECÍFICO
-  async listarMinhasTentativas(ditadoId) {
-    try {
-      const response = await api.get(`/Alunos/ditados/${ditadoId}/minhas-tentativas`)
-      return response.data || []
-    } catch (erro) {
-      console.error('Erro ao listar minhas tentativas:', erro.response?.data || erro)
-      throw erro
-    }
   }
 }

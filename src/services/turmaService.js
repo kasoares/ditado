@@ -129,5 +129,65 @@ export const turmaService = {
       console.error('Erro ao limpar alunos da turma:', erro.response?.data || erro)
       throw erro
     }
+  },
+
+  // ADICIONAR UM ALUNO ESPECÍFICO À TURMA
+  async adicionarAluno(turmaId, alunoId) {
+    try {
+      const response = await api.post(`/Turmas/${turmaId}/alunos/${alunoId}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao adicionar aluno à turma:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  // REMOVER UM ALUNO ESPECÍFICO DA TURMA
+  async removerAluno(turmaId, alunoId) {
+    try {
+      const response = await api.delete(`/Turmas/${turmaId}/alunos/${alunoId}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao remover aluno da turma:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  // ATRIBUIR DITADO À TURMA
+  async atribuirDitado(turmaId, ditadoId, dataLimite) {
+    try {
+      const response = await api.post(`/Turmas/${turmaId}/ditados`, {
+        ditadoId,
+        dataLimite
+      })
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao atribuir ditado à turma:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  // ATUALIZAR DATA LIMITE DE DITADO ATRIBUÍDO
+  async atualizarAtribuicaoDitado(turmaId, ditadoId, dataLimite) {
+    try {
+      const response = await api.put(`/Turmas/${turmaId}/ditados/${ditadoId}`, {
+        dataLimite
+      })
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao atualizar atribuição de ditado:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
+  // REMOVER ATRIBUIÇÃO DE DITADO DE UMA TURMA
+  async removerAtribuicaoDitado(turmaId, ditadoId) {
+    try {
+      const response = await api.delete(`/Turmas/${turmaId}/ditados/${ditadoId}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao remover atribuição de ditado:', erro.response?.data || erro)
+      throw erro
+    }
   }
 }
