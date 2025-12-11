@@ -11,6 +11,18 @@ export const ditadoService = {
     }
   },
 
+  
+  async listarMeusDitados() {
+    try {
+      
+      const response = await api.get('/Alunos/meus-ditados')
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao listar meus ditados:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
   async buscarPorId(id) {
     try {
       const response = await api.get(`/Ditados/${id}`)

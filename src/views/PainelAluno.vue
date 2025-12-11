@@ -165,8 +165,8 @@ async function carregarCategorias() {
 async function buscarDitados() {
   carregando.value = true
   try {
-    // TESTE: Usar ditadoService para listar TODOS os ditados
-    const dados = await ditadoService.listarTodos()
+    // TESTE: Usar ditadoService para listar ditados atribuídos ao aluno
+    const dados = await ditadoService.listarMeusDitados()
     ditados.value = dados
     filtrarDitados()
   } catch (erro) {
