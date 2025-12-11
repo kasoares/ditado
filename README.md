@@ -1,6 +1,6 @@
 # DitadoApp
 
-Aplicação web para criação e realização de ditados (frontend) construída com Vite e Vue.js. Este repositório contém a interface do projeto — componentes, views e serviços que consomem APIs.
+Aplicação web para criação e realização de ditados (frontend) construída com Vite e Vue.js. Este repositório contém a interface do projeto: componentes, views e serviços que consomem APIs.
 
 ## Funcionalidades principais
 
