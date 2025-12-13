@@ -23,6 +23,16 @@ export const ditadoService = {
     }
   },
 
+  async listarMeusDitadosAtribuidos() {
+    try {
+      const response = await api.get("/Professores/meus-ditados-atribuidos")
+      return response.data
+    } catch (erro) {
+      console.error("Erro ao listar meus ditados atribuidos:", erro.response?.data || erro)
+      throw erro
+    }
+  },
+
   async buscarPorId(id) {
     try {
       const response = await api.get(`/Ditados/${id}`)

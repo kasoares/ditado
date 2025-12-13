@@ -189,5 +189,15 @@ export const turmaService = {
       console.error('Erro ao remover atribuição de ditado:', erro.response?.data || erro)
       throw erro
     }
+  },
+
+  async listarDitados(turmaId) {
+    try {
+      const response = await api.get(`/Turmas/${turmaId}/ditados`)
+      return response.data || []
+    } catch (erro) {
+      console.error('Erro ao listar ditados da turma:', erro.response?.data || erro)
+      throw erro
+    }
   }
 }

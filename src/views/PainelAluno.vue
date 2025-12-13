@@ -66,8 +66,8 @@
 
         <!-- Lista de ditados -->
         <v-row v-else>
-          <v-col v-for="ditado in ditadosFiltrados" :key="ditado.id" cols="12" md="6">
-            <v-card elevation="2" class="ditado-card" hover @click="iniciarDitado(ditado.id)">
+          <v-col v-for="ditado in ditadosFiltrados" :key="ditado.ditadoId" cols="12" md="6">
+            <v-card elevation="2" class="ditado-card" hover @click="iniciarDitado(ditado.ditadoId)">
               <v-card-text class="pa-6">
                 <div class="d-flex align-center mb-4">
                   <v-avatar color="primary" size="56" class="mr-4">
@@ -234,4 +234,3 @@ function getNomeCategoria(categoriaId) {
   transform: translateY(-4px);
 }
 </style>
-

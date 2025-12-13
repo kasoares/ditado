@@ -4,7 +4,7 @@
     <v-card class="mb-6" elevation="1">
       <v-card-text class="pa-6">
         <h1 class="text-h4 font-weight-bold mb-2">
-          Bem-vindo(a), {{ authStore.usuario?.nome?.split(' ')[0] }}
+          Bem-vindo(a), {{ authStore.usuario?.nome?.split(" ")[0] }}
         </h1>
         <p class="text-body-1 text-grey-darken-1">
           Gerencie textos, turmas, relatórios e ditados passados
@@ -30,7 +30,13 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="1" class="h-100 action-card" hover @click="irParaGerenciamentoTurmas" :class="{ 'action-card-destaque': temSolicitacoesPendentes }">
+        <v-card
+          elevation="1"
+          class="h-100 action-card"
+          hover
+          @click="irParaGerenciamentoTurmas"
+          :class="{ 'action-card-destaque': temSolicitacoesPendentes }"
+        >
           <v-card-text class="pa-6 text-center">
             <v-badge
               v-if="temSolicitacoesPendentes"
@@ -46,7 +52,12 @@
             <p class="text-body-2 text-grey-darken-1">
               Adicione alunos, organize grupos e defina sessões.
             </p>
-            <v-btn color="success" variant="flat" prepend-icon="mdi-account-plus" class="mt-4 text-none">
+            <v-btn
+              color="success"
+              variant="flat"
+              prepend-icon="mdi-account-plus"
+              class="mt-4 text-none"
+            >
               Novo aluno
             </v-btn>
           </v-card-text>
@@ -61,7 +72,12 @@
             <p class="text-body-2 text-grey-darken-1">
               Acompanhe evolução por aluno, turma e habilidade.
             </p>
-            <v-btn color="info" variant="flat" prepend-icon="mdi-chart-box" class="mt-4 text-none">
+            <v-btn
+              color="info"
+              variant="flat"
+              prepend-icon="mdi-chart-box"
+              class="mt-4 text-none"
+            >
               Visão geral
             </v-btn>
           </v-card-text>
@@ -136,9 +152,7 @@
         <v-icon class="mr-3" color="grey-darken-2">mdi-headphones</v-icon>
         <span class="text-h6 font-weight-bold">Ditados passados</span>
         <v-spacer></v-spacer>
-        <v-chip color="warning" variant="flat">
-          Últimos 30 dias
-        </v-chip>
+        <v-chip color="warning" variant="flat"> Últimos 30 dias </v-chip>
       </v-card-title>
 
       <v-card-text class="pa-6">
@@ -146,8 +160,8 @@
           <v-col cols="12" sm="6">
             <v-text-field
               v-model="filtroDitados"
-              label="Filtrar por turma"
-              placeholder="Digite o nome da turma"
+              label="Filtrar por ditado ou turma"
+              placeholder="Digite o título do ditado ou nome da turma"
               variant="outlined"
               density="comfortable"
               prepend-inner-icon="mdi-magnify"
@@ -157,9 +171,12 @@
           </v-col>
           <v-col cols="12" sm="6">
             <v-select
-              v-model="filtroSerie"
-              label="Série"
-              :items="series"
+              v-model="filtroTurma"
+              label="Turma"
+              :items="turmasUnicas"
+              item-title="nome"
+              item-value="nome"
+              placeholder="Todas as turmas"
               variant="outlined"
               density="comfortable"
               clearable
@@ -177,11 +194,11 @@
         <!-- Lista vazia -->
         <div v-else-if="ditadosFiltrados.length === 0" class="text-center py-12">
           <v-icon size="64" color="grey-lighten-1">mdi-folder-open-outline</v-icon>
-          <p class="text-body-1 text-grey mt-4">Nenhum ditado encontrado</p>
-          <v-btn 
-            color="primary" 
-            variant="flat" 
-            prepend-icon="mdi-plus" 
+          <p class="text-body-1 text-grey mt-4">Nenhum ditado atribuído encontrado</p>
+          <v-btn
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-plus"
             class="mt-4 text-none"
             @click="irParaCadastroTextos"
           >
@@ -194,7 +211,7 @@
           <v-list class="bg-transparent">
             <v-list-item
               v-for="ditado in ditadosFiltrados"
-              :key="ditado.id"
+              :key="ditado.ditadoId"
               class="mb-3 rounded border"
               elevation="0"
             >
@@ -205,25 +222,38 @@
               </template>
 
               <v-list-item-title class="text-h6 font-weight-bold mb-1">
-                {{ ditado.titulo }}
+                {{ ditado.ditadoTitulo }}
+                <v-chip
+                  :color="ditado.vencido ? 'error' : 'success'"
+                  variant="flat"
+                  size="x-small"
+                  class="ml-2"
+                >
+                  {{ ditado.vencido ? 'Vencido' : 'Ativo' }}
+                </v-chip>
               </v-list-item-title>
-              
-              <v-list-item-subtitle class="text-body-2 mb-2">
-                <v-icon size="16" class="mr-1">mdi-calendar</v-icon>
-                Realizado em {{ formatarData(ditado.dataCriacao) }}
-                <v-icon size="16" class="ml-3 mr-1">mdi-account-multiple</v-icon>
-                {{ ditado.alunos || '24' }} alunos
+
+              <v-list-item-subtitle class="text-body-2">
+                <span class="font-weight-medium">Turma:</span> {{ ditado.turmaNome }}
+                <br />
+                <v-icon size="16" class="mr-1">mdi-calendar-alert</v-icon>
+                Data limite: {{ formatarData(ditado.dataLimite) }}
+                <br />
+                <v-icon size="16" class="mr-1">mdi-account-multiple</v-icon>
+                {{ ditado.alunosQueFizeram }} / {{ ditado.totalAlunos }} alunos ({{
+                  ditado.percentualConclusao
+                }}%)
               </v-list-item-subtitle>
 
               <template v-slot:append>
                 <div class="d-flex align-center gap-2">
-                  <v-chip 
-                    :color="obterCorMedia(ditado.media || 78)" 
+                  <v-chip
+                    :color="obterCorMedia(ditado.notaMedia)"
                     variant="flat"
                     size="large"
                   >
                     <v-icon start size="18">mdi-check-circle</v-icon>
-                    Média {{ ditado.media || '78' }}%
+                    Média {{ ditado.notaMedia }}%
                   </v-chip>
                   <v-btn
                     icon="mdi-open-in-new"
@@ -248,86 +278,117 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { ditadoService } from '@/services/ditadoService'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { ditadoService } from "@/services/ditadoService";
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
 const estatisticas = ref({
   turmas: 0,
-  ditados: 0
-})
+  ditados: 0,
+});
 
-const ditados = ref([])
-const solicitacoesPendentes = ref([])
-const carregandoDitados = ref(false)
-const carregandoEstatisticas = ref(false)
-const filtroDitados = ref('')
-const filtroSerie = ref(null)
+const ditados = ref([]);
+const solicitacoesPendentes = ref([]);
+const carregandoDitados = ref(false);
+const carregandoEstatisticas = ref(false);
+const filtroDitados = ref("");
+const filtroTurma = ref(null);
 
 const series = [
-  '1º ano', '2º ano', '3º ano', '4º ano', '5º ano',
-  '6º ano', '7º ano', '8º ano', '9º ano'
-]
+  "1º ano",
+  "2º ano",
+  "3º ano",
+  "4º ano",
+  "5º ano",
+  "6º ano",
+  "7º ano",
+  "8º ano",
+  "9º ano",
+]; // Keep for now, might be used for other filters or removed if not applicable.
 
 const snackbar = ref({
   show: false,
-  mensagem: '',
-  color: 'info'
-})
+  mensagem: "",
+  color: "info",
+});
 
 const ditadosFiltrados = computed(() => {
-  let resultado = [...ditados.value]
+  let resultado = [...ditados.value];
 
-  if (filtroDitados.value && filtroDitados.value.trim() !== '') {
-    const busca = filtroDitados.value.toLowerCase().trim()
-    resultado = resultado.filter(d => 
-      d.titulo?.toLowerCase().includes(busca)
-    )
+  if (filtroDitados.value && filtroDitados.value.trim() !== "") {
+    const busca = filtroDitados.value.toLowerCase().trim();
+    resultado = resultado.filter(
+      (d) =>
+        d.ditadoTitulo?.toLowerCase().includes(busca) ||
+        d.turmaNome?.toLowerCase().includes(busca)
+    );
   }
 
-  if (filtroSerie.value) {
-    resultado = resultado.filter(d => d.serie === filtroSerie.value)
+  if (filtroTurma.value) {
+    resultado = resultado.filter((d) => d.turmaNome === filtroTurma.value);
   }
 
-  return resultado
-})
+  // Sorting: Vencidos primeiro (dataLimite ASC), depois por dataLimite ASC
+  resultado.sort((a, b) => {
+    if (a.vencido && !b.vencido) return -1;
+    if (!a.vencido && b.vencido) return 1;
+    return new Date(a.dataLimite).getTime() - new Date(b.dataLimite).getTime();
+  });
 
-const temSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length > 0)
-const totalSolicitacoesPendentes = computed(() => solicitacoesPendentes.value.length)
+  return resultado;
+});
+
+const temSolicitacoesPendentes = computed(
+  () => solicitacoesPendentes.value.length > 0
+);
+const totalSolicitacoesPendentes = computed(
+  () => solicitacoesPendentes.value.length
+);
+
+const turmasUnicas = computed(() => {
+  const uniqueTurmas = new Set();
+  ditados.value.forEach((ditado) => {
+    if (ditado.turmaNome) {
+      uniqueTurmas.add(ditado.turmaNome);
+    }
+  });
+  return Array.from(uniqueTurmas).map((turmaNome) => ({ nome: turmaNome }));
+});
 
 onMounted(() => {
-  buscarEstatisticas()
-  buscarDitados()
-  buscarSolicitacoesPendentes()
-})
+  buscarEstatisticas(); // Maybe this needs to be re-evaluated later if it relies on ditadoService.listarTodos()
+  buscarDitadosAtribuidos();
+  buscarSolicitacoesPendentes();
+});
 
+// This function might be removed or adapted if 'estatisticas.value.ditados' is no longer 'all ditados'
 async function buscarEstatisticas() {
-  carregandoEstatisticas.value = true
+  carregandoEstatisticas.value = true;
   try {
-    const dadosDitados = await ditadoService.listarTodos()
-    estatisticas.value.ditados = dadosDitados.length
+    // For now, keep it as is, but it might need to change to count attributed ditados.
+    const dadosDitados = await ditadoService.listarMeusDitadosAtribuidos();
+    estatisticas.value.ditados = dadosDitados.length;
   } catch (erro) {
-    console.error('Erro ao carregar estatísticas:', erro)
+    console.error("Erro ao carregar estatísticas:", erro);
   } finally {
-    carregandoEstatisticas.value = false
+    carregandoEstatisticas.value = false;
   }
 }
 
-async function buscarDitados() {
-  carregandoDitados.value = true
+async function buscarDitadosAtribuidos() {
+  carregandoDitados.value = true;
   try {
-    const dados = await ditadoService.listarTodos()
-    ditados.value = []
-    estatisticas.value.ditados = dados.length
+    const dados = await ditadoService.listarMeusDitadosAtribuidos();
+    ditados.value = dados;
   } catch (erro) {
-    console.error('Erro ao carregar ditados:', erro)
-    mostrarSnackbar('Erro ao carregar ditados', 'error')
+    console.error("Erro ao carregar ditados atribuidos:", erro);
+    mostrarSnackbar("Erro ao carregar ditados atribuidos", "error");
   } finally {
-    carregandoDitados.value = false
+    carregandoDitados.value = false;
   }
 }
 
@@ -335,81 +396,81 @@ async function buscarSolicitacoesPendentes() {
   try {
     // Nota: Solicitações de entrada em turma podem não estar disponíveis na API
     // Esse recurso ainda precisa ser clarificado
-    solicitacoesPendentes.value = []
+    solicitacoesPendentes.value = [];
   } catch (erro) {
-    console.error('Erro ao carregar solicitações pendentes:', erro)
+    console.error("Erro ao carregar solicitações pendentes:", erro);
   }
 }
 
 async function aprovarSolicitacao(solicitacao) {
   try {
     // Nota: Aprovação de solicitações de entrada em turma pode não estar na API
-    mostrarSnackbar('Funcionalidade ainda não implementada', 'warning')
+    mostrarSnackbar("Funcionalidade ainda não implementada", "warning");
   } catch (erro) {
-    console.error('Erro ao aprovar solicitação:', erro)
-    mostrarSnackbar('Erro ao aprovar solicitação', 'error')
+    console.error("Erro ao aprovar solicitação:", erro);
+    mostrarSnackbar("Erro ao aprovar solicitação", "error");
   }
 }
 
 async function rejeitarSolicitacao(solicitacao) {
   try {
     // Nota: Rejeição de solicitações de entrada em turma pode não estar na API
-    mostrarSnackbar('Funcionalidade ainda não implementada', 'warning')
+    mostrarSnackbar("Funcionalidade ainda não implementada", "warning");
   } catch (erro) {
-    console.error('Erro ao rejeitar solicitação:', erro)
-    mostrarSnackbar('Erro ao rejeitar solicitação', 'error')
+    console.error("Erro ao rejeitar solicitação:", erro);
+    mostrarSnackbar("Erro ao rejeitar solicitação", "error");
   }
 }
 
 function formatarData(data) {
-  const date = new Date(data)
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const date = new Date(data);
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function obterIniciaisUsuario(usuario) {
-  if (!usuario || !usuario.nome) return 'A'
+  if (!usuario || !usuario.nome) return "A";
   return usuario.nome
-    .split(' ')
-    .map(n => n[0])
-    .join('')
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
     .substring(0, 2)
-    .toUpperCase()
+    .toUpperCase();
 }
 
 function obterCorMedia(media) {
-  if (media >= 80) return 'success'
-  if (media >= 60) return 'warning'
-  return 'error'
+  if (media >= 80) return "success";
+  if (media >= 60) return "warning";
+  return "error";
 }
 
 function irParaCadastroTextos() {
-  router.push('/cadastro-ditado')
+  router.push("/cadastro-ditado");
 }
 
 function irParaGerenciamentoTurmas() {
-  router.push('/turmas')
+  router.push("/turmas");
 }
 
 function irParaRelatorios() {
-  mostrarSnackbar('Funcionalidade em desenvolvimento', 'info')
+  mostrarSnackbar("Funcionalidade em desenvolvimento", "info");
 }
 
 function verDetalhesDitado(ditado) {
-  mostrarSnackbar('Funcionalidade em desenvolvimento', 'info')
+  mostrarSnackbar("Funcionalidade em desenvolvimento", "info");
 }
 
-function mostrarSnackbar(mensagem, cor = 'info') {
+function mostrarSnackbar(mensagem, cor = "info") {
   snackbar.value = {
     show: true,
     mensagem,
-    color: cor
-  }
+    color: cor,
+  };
 }
 </script>
 
