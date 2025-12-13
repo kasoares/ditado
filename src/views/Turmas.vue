@@ -196,7 +196,7 @@
               <v-col cols="12" sm="6">
                 <v-select
                   v-model="formDados.serie"
-                  label="Série"
+                  label="Ano"
                   :items="[1, 2, 3, 4, 5, 6, 7, 8, 9]"
                   variant="outlined"
                   density="comfortable"
@@ -229,7 +229,6 @@
 
             <v-textarea
               v-model="formDados.descricao"
-              label="Descrição"
               placeholder="Descreva a turma..."
               variant="outlined"
               density="comfortable"
@@ -306,10 +305,6 @@
             <v-tab value="ditados">
               <v-icon start>mdi-file-document</v-icon>
               Ditados
-            </v-tab>
-            <v-tab value="solicitacoes">
-              <v-icon start>mdi-bell-ring</v-icon>
-              Solicitações
             </v-tab>
           </v-tabs>
 

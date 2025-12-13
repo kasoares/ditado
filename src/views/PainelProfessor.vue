@@ -25,19 +25,6 @@
             <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" class="mt-4 text-none">
               Novo ditado
             </v-btn>
-            <div class="mt-4">
-              <v-divider class="mb-3"></v-divider>
-              <div class="d-flex flex-column gap-2 text-left text-caption text-grey-darken-1">
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-tag-multiple</v-icon>
-                  <span>Categorize por assunto e nível</span>
-                </div>
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-book-open</v-icon>
-                  <span>Importe .txt ou cole conteúdo</span>
-                </div>
-              </div>
-            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -62,19 +49,6 @@
             <v-btn color="success" variant="flat" prepend-icon="mdi-account-plus" class="mt-4 text-none">
               Novo aluno
             </v-btn>
-            <div class="mt-4">
-              <v-divider class="mb-3"></v-divider>
-              <div class="d-flex flex-column gap-2 text-left text-caption text-grey-darken-1">
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-shield-lock</v-icon>
-                  <span>Convites com código seguro</span>
-                </div>
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-calendar</v-icon>
-                  <span>Agende ditados por data e tempo</span>
-                </div>
-              </div>
-            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -90,19 +64,6 @@
             <v-btn color="info" variant="flat" prepend-icon="mdi-chart-box" class="mt-4 text-none">
               Visão geral
             </v-btn>
-            <div class="mt-4">
-              <v-divider class="mb-3"></v-divider>
-              <div class="d-flex flex-column gap-2 text-left text-caption text-grey-darken-1">
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-percent</v-icon>
-                  <span>Taxa de acerto por fonema e acentuação</span>
-                </div>
-                <div class="d-flex align-center">
-                  <v-icon size="16" class="mr-2">mdi-clock-outline</v-icon>
-                  <span>Comparativos entre turmas</span>
-                </div>
-              </div>
-            </div>
           </v-card-text>
         </v-card>
       </v-col>

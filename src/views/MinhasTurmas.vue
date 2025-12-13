@@ -20,10 +20,6 @@
         <v-icon start>mdi-school</v-icon>
         Turmas Ativas ({{ minhasTurmas.length }})
       </v-tab>
-      <v-tab value="pendentes">
-        <v-icon start>mdi-clock</v-icon>
-        Pendentes ({{ solicitacoesPendentes.length }})
-      </v-tab>
     </v-tabs>
 
     <!-- Conteúdo das Abas -->
@@ -100,52 +96,6 @@
                   Ver Ditados
                 </v-btn>
               </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-window-item>
-
-      <!-- Solicitações Pendentes -->
-      <v-window-item value="pendentes">
-        <v-row>
-          <v-col
-            v-if="solicitacoesPendentes.length === 0"
-            cols="12"
-            class="text-center py-12"
-          >
-            <v-icon size="64" color="grey-lighten-1" class="mb-4">
-              mdi-check-circle-outline
-            </v-icon>
-            <p class="text-h6 text-grey-darken-1">Nenhuma solicitação pendente</p>
-          </v-col>
-
-          <v-col
-            v-for="solicitacao in solicitacoesPendentes"
-            :key="solicitacao.id"
-            cols="12"
-          >
-            <v-card elevation="1" class="mb-4">
-              <v-card-text class="pa-6">
-                <v-row align="center">
-                  <v-col cols="12" md="8">
-                    <h3 class="text-h6 font-weight-bold mb-2">
-                      {{ solicitacao.turma?.nome }}
-                    </h3>
-                    <p class="text-body-2 text-grey-darken-1 mb-2">
-                      {{ solicitacao.turma?.descricao }}
-                    </p>
-                    <p class="text-caption text-grey-darken-2">
-                      Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
-                    </p>
-                  </v-col>
-                  <v-col cols="12" md="4" class="text-md-right">
-                    <v-chip color="warning" variant="flat">
-                      <v-icon start>mdi-clock</v-icon>
-                      Pendente
-                    </v-chip>
-                  </v-col>
-                </v-row>
-              </v-card-text>
             </v-card>
           </v-col>
         </v-row>
