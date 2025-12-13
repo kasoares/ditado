@@ -127,11 +127,11 @@ export const useTurmaStore = defineStore('turma', () => {
     }
   }
 
-  async function adicionarDitado(turmaId, ditadoId) {
+  async function adicionarDitado(turmaId, ditadoId, dataLimite) {
     carregando.value = true
     erro.value = null
     try {
-      const resultado = await turmaService.adicionarDitado(turmaId, ditadoId)
+      const resultado = await turmaService.atribuirDitado(turmaId, ditadoId, dataLimite)
       return resultado
     } catch (e) {
       erro.value = e.message
