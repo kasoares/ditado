@@ -101,5 +101,16 @@ export const ditadoService = {
       console.error('Erro ao buscar resultado:', erro.response?.data || erro)
       throw erro
     }
+  },
+
+    async buscarResultadosDitadoProfessor(turmaId, ditadoId) {
+    try {
+      const response = await api.get(`/Professores/turmas/${turmaId}/ditados/${ditadoId}/resultados`)
+      return response.data
+    } catch (erro) {
+      console.error("Erro ao buscar resultados do ditado para professor:", erro.response?.data || erro)
+      throw erro
+    }
   }
+
 }

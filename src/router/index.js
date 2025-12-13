@@ -118,6 +118,12 @@ const routes = [
         name: 'Usuarios',
         component: () => import('@/views/Usuarios.vue'),
         meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+            {
+        path: '/turmas/:turmaId/ditados/:ditadoId/resultados',
+        name: 'ResultadosDitadoProfessor',
+        component: () => import('@/views/ResultadoDitado.vue'),
+        meta: { requerTipo: ['Professor', 'Administrador'] }
       }
     ]
   }

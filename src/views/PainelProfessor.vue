@@ -114,12 +114,14 @@
             </v-list-item-title>
 
             <v-list-item-subtitle class="text-body-2 mb-2">
-              <div>{{ solicitacao.usuario?.email }}</div>
-              <div class="text-caption mt-1">
-                Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
-                <v-chip color="info" variant="flat" size="x-small" class="ml-2">
-                  {{ solicitacao.turma?.nome }}
-                </v-chip>
+              <div>
+                <div>{{ solicitacao.usuario?.email }}</div>
+                <div class="text-caption mt-1">
+                  Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
+                  <v-chip color="info" variant="flat" size="x-small" class="ml-2">
+                    {{ solicitacao.turma?.nome }}
+                  </v-chip>
+                </div>
               </div>
             </v-list-item-subtitle>
 
@@ -462,7 +464,13 @@ function irParaRelatorios() {
 }
 
 function verDetalhesDitado(ditado) {
-  mostrarSnackbar("Funcionalidade em desenvolvimento", "info");
+  router.push({
+    name: "ResultadosDitadoProfessor",
+    params: {
+      turmaId: ditado.turmaId,
+      ditadoId: ditado.ditadoId,
+    },
+  });
 }
 
 function mostrarSnackbar(mensagem, cor = "info") {
