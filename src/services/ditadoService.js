@@ -11,6 +11,20 @@ export const ditadoService = {
     }
   },
 
+  // Adicione isso no ditadoService.js
+  async obterDetalhesAtribuicao(turmaId, ditadoId) {
+    try {
+      // Tenta buscar os detalhes completos
+      // ATENÇÃO: Verifique no seu Swagger qual é a URL correta que retorna 'DitadoAtribuidoDetalheDto'
+      // Palpite 1:
+      const response = await api.get(`/Turmas/${turmaId}/ditados/${ditadoId}`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao obter detalhes do ditado:', erro)
+      throw erro
+    }
+  },
+
   
   async listarMeusDitados() {
     try {
