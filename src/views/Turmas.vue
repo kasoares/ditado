@@ -91,12 +91,13 @@
               <template v-slot:activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  icon="mdi-plus"
                   size="small"
                   variant="text"
-                  color="success"
+                  color="info"
                   @click="irParaGerenciarAlunos(item)"
-                />
+                >
+                  <v-icon size="20">mdi-account-cog</v-icon>
+                </v-btn>
               </template>
             </v-tooltip>
             <v-tooltip text="Visualizar detalhes" location="top">
@@ -296,165 +297,55 @@
 
           <v-divider class="my-6"></v-divider>
 
-          <!-- Abas -->
-          <v-tabs v-model="abaSelecionada" color="primary">
-            <v-tab value="alunos">
-              <v-icon start>mdi-account-multiple</v-icon>
-              Alunos ({{ turmaSelecionada?.totalAlunos || 0 }})
-            </v-tab>
-            <v-tab value="ditados">
-              <v-icon start>mdi-file-document</v-icon>
-              Ditados
-            </v-tab>
-          </v-tabs>
+          <!-- Título da seção de alunos -->
+          <div class="d-flex align-center mb-4">
+            <v-icon class="mr-2" color="primary">mdi-account-multiple</v-icon>
+            <span class="text-subtitle-1 font-weight-bold">Alunos ({{ turmaSelecionada?.totalAlunos || 0 }})</span>
+          </div>
 
-          <!-- Conteúdo das Abas -->
-          <v-window v-model="abaSelecionada" class="mt-4">
-            <!-- Aba Alunos -->
-            <v-window-item value="alunos">
-              <div class="mb-4">
-                <v-btn
-                  color="success"
-                  prepend-icon="mdi-plus"
-                  size="small"
-                  @click="irParaInsertAluno"
-                >
-                  Inserir Aluno
-                </v-btn>
-              </div>
-              <div v-if="membros.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="membro in membros"
-                    :key="membro.id"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-avatar color="primary">
-                        {{ obterIniciaisMembro(membro) }}
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>{{ membro.nome }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ membro.email }}</v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-delete"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="removerMembro(membro)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-account-multiple-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhum aluno na turma</p>
-              </div>
-            </v-window-item>
-
-            <!-- Aba Ditados -->
-            <v-window-item value="ditados">
-              <div v-if="ditadosTurma.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="ditado in ditadosTurma"
-                    :key="ditado.ditadoId"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon color="primary">mdi-file-document</v-icon>
-                    </template>
-                    <v-list-item-title>{{ ditado.ditadoTitulo }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      <div v-if="ditado.dataLimite" class="text-caption">
-                        Data limite: {{ formatarData(ditado.dataLimite) }}
-                        <v-chip v-if="ditado.vencido" color="error" size="x-small" class="ml-1">Vencido</v-chip>
-                      </div>
-                      <div v-if="ditado.categorias && ditado.categorias.length > 0" class="d-flex gap-1 flex-wrap mt-1">
-                        <v-chip
-                          v-for="(cat, idx) in ditado.categorias"
-                          :key="idx"
-                          size="x-small"
-                          variant="outlined"
-                          color="secondary"
-                        >
-                          {{ cat }}
-                        </v-chip>
-                      </div>
-                      <div class="mt-1">
-                        <span class="text-caption">{{ ditado.alunosQueFizeram }}/{{ ditado.totalAlunos }} alunos ({{ ditado.percentualConclusao?.toFixed(0) || 0 }}%)</span>
-                        <span v-if="ditado.notaMedia" class="text-caption ml-2">• Nota média: {{ ditado.notaMedia.toFixed(1) }}</span>
-                      </div>
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-delete"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="removerDitado(ditado)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-file-document-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhum ditado adicionado à turma</p>
-              </div>
-            </v-window-item>
-
-            <!-- Aba Solicitações -->
-            <v-window-item value="solicitacoes">
-              <div v-if="solicitacoesPendentes.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="solicitacao in solicitacoesPendentes"
-                    :key="solicitacao.id"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-avatar color="warning">
-                        {{ obterIniciaisMembro(solicitacao.usuario) }}
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>{{ solicitacao.usuario?.nome }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-check"
-                        size="small"
-                        variant="text"
-                        color="success"
-                        @click="aprovarSolicitacao(solicitacao)"
-                      />
-                      <v-btn
-                        icon="mdi-close"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="rejeitarSolicitacao(solicitacao)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-bell-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhuma solicitação pendente</p>
-              </div>
-            </v-window-item>
-          </v-window>
+          <!-- Lista de Alunos -->
+          <div class="mb-4">
+            <v-btn
+              color="success"
+              prepend-icon="mdi-plus"
+              size="small"
+              @click="irParaInsertAluno"
+            >
+              Inserir Aluno
+            </v-btn>
+          </div>
+          <div v-if="membros.length > 0">
+            <v-list>
+              <v-list-item
+                v-for="membro in membros"
+                :key="membro.id"
+                class="mb-2"
+              >
+                <template v-slot:prepend>
+                  <v-avatar color="primary">
+                    {{ obterIniciaisMembro(membro) }}
+                  </v-avatar>
+                </template>
+                <v-list-item-title>{{ membro.nome }}</v-list-item-title>
+                <v-list-item-subtitle>{{ membro.email }}</v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-btn
+                    icon="mdi-delete"
+                    size="small"
+                    variant="text"
+                    color="error"
+                    @click="removerMembro(membro)"
+                  />
+                </template>
+              </v-list-item>
+            </v-list>
+          </div>
+          <div v-else class="text-center py-6">
+            <v-icon size="48" color="grey-lighten-1" class="mb-2">
+              mdi-account-multiple-outline
+            </v-icon>
+            <p class="text-grey-darken-1">Nenhum aluno na turma</p>
+          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -632,7 +523,7 @@ const headers = [
   { title: 'Série', key: 'serie', align: 'center' },
   { title: 'Alunos', key: 'totalAlunos', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', sortable: false }
+  { title: 'Ações', key: 'acoes', sortable: false, align: 'center' }
 ]
 
 const regras = {
@@ -642,9 +533,9 @@ const regras = {
 onMounted(async () => {
   await Promise.all([
     carregarTurmas(),
-    carregarCategorias()
+    carregarCategorias(),
+    carregarTodosAlunos()
   ])
-  await carregarTodosAlunos()
 })
 
 async function carregarTurmas() {
@@ -785,24 +676,8 @@ async function carregarDetalhesTurma(turmaId) {
     const turmaDetalhes = await turmaService.buscarPorId(turmaId)
     turmaSelecionada.value = turmaDetalhes
     membros.value = turmaDetalhes.alunos || []
-    
-    // Carregar ditados atribuídos à turma usando o endpoint de professores
-    try {
-      const todosAtribuidos = await ditadoService.listarMeusDitadosAtribuidos()
-      console.log('[Turmas] Todos ditados atribuídos:', todosAtribuidos)
-      console.log('[Turmas] Filtrando por turmaId:', turmaId, 'tipo:', typeof turmaId)
-      // Filtrar apenas os ditados desta turma (comparando como números)
-      const turmaIdNum = Number(turmaId)
-      ditadosTurma.value = (todosAtribuidos || []).filter(d => {
-        console.log('[Turmas] Comparando d.turmaId:', d.turmaId, 'tipo:', typeof d.turmaId, 'com', turmaIdNum)
-        return Number(d.turmaId) === turmaIdNum
-      })
-      console.log('[Turmas] Ditados filtrados:', ditadosTurma.value)
-    } catch (erroDitados) {
-      console.error('Erro ao carregar ditados da turma:', erroDitados)
-      ditadosTurma.value = []
-    }
-    
+    // ditadosTurma e solicitacoesPendentes não são retornados pela API no escopo atual
+    ditadosTurma.value = []
     solicitacoesPendentes.value = []
   } catch (erro) {
     console.error('Erro ao carregar detalhes da turma:', erro)
@@ -855,14 +730,14 @@ async function confirmarRemocaoMembro() {
 }
 
 async function removerDitado(ditado) {
-  if (confirm(`Deseja remover o ditado "${ditado.ditadoTitulo}" da turma?`)) {
+  if (confirm(`Deseja remover o ditado "${ditado.titulo}" da turma?`)) {
     try {
-      await turmaService.removerAtribuicaoDitado(turmaSelecionada.value.id, ditado.ditadoId)
+      await turmaService.removerAtribuicaoDitado(turmaSelecionada.value.id, ditado.id)
       
       // Remover da lista local
-      ditadosTurma.value = ditadosTurma.value.filter(d => d.ditadoId !== ditado.ditadoId)
+      ditadosTurma.value = ditadosTurma.value.filter(d => d.id !== ditado.id)
       
-      mostrarSnackbar(`Ditado "${ditado.ditadoTitulo}" removido da turma com sucesso`, 'success')
+      mostrarSnackbar(`Ditado "${ditado.titulo}" removido da turma com sucesso`, 'success')
     } catch (erro) {
       console.error('Erro ao remover ditado:', erro)
       mostrarSnackbar('Erro ao remover ditado', 'error')
@@ -920,10 +795,17 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 async function carregarTodosAlunos() {
   try {
     const alunos = await usuarioService.listarTodos()
-    // Filtrar apenas alunos (usuários com tipo 'Aluno')
-    alunosDisponiveis.value = alunos.filter(u => u.tipoUsuario === 'Aluno') || []
+    // Filtrar apenas alunos - tenta vários campos possíveis
+    todosOsAlunos.value = alunos.filter(u => 
+      u.tipoUsuario === 'Aluno' || 
+      u.tipo === 'Aluno' ||
+      u.tipoUsuario === 2 ||
+      u.tipo === 2
+    ) || []
+    alunosDisponiveis.value = [...todosOsAlunos.value]
   } catch (erro) {
     console.error('Erro ao carregar alunos:', erro)
+    todosOsAlunos.value = []
     alunosDisponiveis.value = []
   }
 }
@@ -938,7 +820,9 @@ function irParaInsertAluno() {
 
 function abrirDialogAdicionarAlunos() {
   alunosSelecionados.value = []
-  alunosDisponiveis.value = alunosDisponiveis.value
+  // Filtra apenas alunos que NÃO estão na turma
+  const alunosIdsNaTurma = turmaSelecionada.value?.alunos?.map(a => a.id) || []
+  alunosDisponiveis.value = todosOsAlunos.value.filter(a => !alunosIdsNaTurma.includes(a.id))
   dialogAdicionarAlunos.value = true
 }
 
@@ -955,14 +839,23 @@ async function confirmarAdicionarAlunos() {
 
   adicionandoAlunos.value = true
   try {
-    // Combinar alunos já adicionados com os novos
+    // Combinar alunos já adicionados com os novos, evitando duplicações
     const alunosIdsAtuais = turmaSelecionada.value.alunos?.map(a => a.id) || []
     const todosAlunosIds = [...new Set([...alunosIdsAtuais, ...alunosSelecionados.value])]
+    
+    // Verifica quantos alunos novos foram realmente adicionados
+    const novosAlunos = alunosSelecionados.value.filter(id => !alunosIdsAtuais.includes(id))
     
     await turmaService.atualizar(turmaSelecionada.value.id, { 
       alunosIds: todosAlunosIds 
     })
-    mostrarSnackbar(`${alunosSelecionados.value.length} aluno(s) adicionado(s) com sucesso!`, 'success')
+    
+    if (novosAlunos.length > 0) {
+      mostrarSnackbar(`${novosAlunos.length} aluno(s) adicionado(s) com sucesso!`, 'success')
+    } else {
+      mostrarSnackbar('Os alunos selecionados já estavam na turma', 'info')
+    }
+    
     fecharDialogAdicionarAlunos()
     await carregarDetalhesTurma(turmaSelecionada.value.id)
   } catch (erro) {

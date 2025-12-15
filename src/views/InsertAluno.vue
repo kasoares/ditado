@@ -4,7 +4,7 @@
       <v-col cols="12">
         <v-card elevation="0" class="mb-6">
           <v-card-title class="bg-primary text-white pa-4">
-            <v-icon class="mr-2">mdi-account-plus</v-icon>
+            <v-icon class="mr-2">mdi-account-cog</v-icon>
             Gerenciar Alunos
           </v-card-title>
 
@@ -59,9 +59,14 @@
                 <v-list-item
                   v-for="aluno in alunosFiltrados"
                   :key="aluno.id"
-                  class="mb-1 rounded border pa-2"
-                  :class="{ 'bg-green-lighten-5': selecionados.includes(aluno.id) }"
+                  class="mb-1 rounded border pa-2 aluno-item aluno-clicavel"
+                  :class="{ 
+                    'bg-green-lighten-5': selecionados.includes(aluno.id) && !alunoSeraDeletado(aluno.id),
+                    'aluno-na-turma': alunosJaAdicionados.includes(aluno.id) && selecionados.includes(aluno.id),
+                    'aluno-sera-deletado': alunoSeraDeletado(aluno.id)
+                  }"
                   density="compact"
+                  @click="alternarSeleção(aluno.id)"
                 >
                   <template v-slot:prepend>
                     <v-checkbox
@@ -87,15 +92,40 @@
                   </div>
 
                   <template v-slot:append>
-                    <v-chip
-                      v-if="alunosJaAdicionados.includes(aluno.id)"
-                      color="success"
-                      variant="tonal"
-                      size="x-small"
-                      prepend-icon="mdi-check"
-                    >
-                      Na turma
-                    </v-chip>
+                    <div class="chip-container">
+                      <!-- Aluno que será deletado -->
+                      <v-chip
+                        v-if="alunoSeraDeletado(aluno.id)"
+                        color="error"
+                        variant="tonal"
+                        size="small"
+                        prepend-icon="mdi-alert"
+                      >
+                        Clique em salvar para concluir exclusão
+                      </v-chip>
+                      
+                      <!-- Aluno na turma (normal e hover) -->
+                      <template v-else-if="alunosJaAdicionados.includes(aluno.id) && selecionados.includes(aluno.id)">
+                        <v-chip
+                          color="success"
+                          variant="tonal"
+                          size="small"
+                          prepend-icon="mdi-check"
+                          class="chip-default"
+                        >
+                          Na turma
+                        </v-chip>
+                        <v-chip
+                          color="error"
+                          variant="tonal"
+                          size="small"
+                          prepend-icon="mdi-delete"
+                          class="chip-hover"
+                        >
+                          Clique para excluir
+                        </v-chip>
+                      </template>
+                    </div>
                   </template>
                 </v-list-item>
               </v-list>
@@ -166,11 +196,23 @@ async function carregarDados() {
   try {
     // Carregar dados da turma
     turma.value = await turmaService.buscarPorId(turmaId)
-    alunosJaAdicionados.value = turma.value.alunosIds || []
+    // Extrai os IDs dos alunos já adicionados
+    alunosJaAdicionados.value = turma.value.alunos ? turma.value.alunos.map(a => a.id) : []
 
-    // Carregar todos os alunos (tipo = 'Aluno')
+    // Carregar todos os alunos
     const todosOsUsuarios = await usuarioService.listarTodos()
-    alunos.value = todosOsUsuarios.filter(u => u.tipo === 'Aluno')
+    console.log('Todos os usuários:', todosOsUsuarios)
+    console.log('Primeiro usuário:', todosOsUsuarios[0])
+    
+    // Filtrar apenas alunos - tenta vários campos possíveis
+    alunos.value = todosOsUsuarios.filter(u => 
+      u.tipoUsuario === 'Aluno' || 
+      u.tipo === 'Aluno' ||
+      u.tipoUsuario === 2 || // Algumas APIs usam enum numérico
+      u.tipo === 2
+    )
+
+    console.log('Alunos filtrados:', alunos.value)
 
     // Inicializar selecionados com os já adicionados
     selecionados.value = [...alunosJaAdicionados.value]
@@ -191,11 +233,19 @@ function alternarSeleção(alunoId) {
   }
 }
 
+function alunoSeraDeletado(alunoId) {
+  // Aluno estava na turma MAS foi desmarcado
+  return alunosJaAdicionados.value.includes(alunoId) && !selecionados.value.includes(alunoId)
+}
+
 async function salvarAlunos() {
   salvando.value = true
   try {
+    // Garante que não há duplicações enviando apenas IDs únicos
+    const alunosUnicos = [...new Set(selecionados.value)]
+    
     await turmaService.atualizar(turmaId, {
-      alunosIds: selecionados.value
+      alunosIds: alunosUnicos
     })
     mostrarSnackbar(`Alunos salvos na ${turma.value?.nome} com sucesso!`, 'success')
     setTimeout(() => {
@@ -216,3 +266,42 @@ function voltar() {
   router.push('/turmas')
 }
 </script>
+
+<style scoped>
+.aluno-item.aluno-clicavel {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.aluno-item.aluno-na-turma:hover {
+  background-color: #ffebee !important;
+}
+
+.aluno-item.aluno-sera-deletado {
+  background-color: #ffebee !important;
+}
+
+.chip-container {
+  position: relative;
+  min-width: 280px;
+}
+
+.chip-default,
+.chip-hover {
+  transition: opacity 0.3s;
+}
+
+.chip-hover {
+  position: absolute;
+  right: 0;
+  opacity: 0;
+}
+
+.aluno-item.aluno-na-turma:hover .chip-default {
+  opacity: 0;
+}
+
+.aluno-item.aluno-na-turma:hover .chip-hover {
+  opacity: 1;
+}
+</style>
