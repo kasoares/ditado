@@ -175,8 +175,10 @@
         :headers="headers"
         :items="ditadosFiltrados"
         :loading="carregando"
-        class="elevation-0"
+        class="elevation-0 cursor-pointer-row"
         density="comfortable"
+        hover
+        @click:row="abrirDetalhesDitado"
       >
         <template v-slot:item.titulo="{ item }">
           <div class="font-weight-bold">{{ item.titulo }}</div>
@@ -214,7 +216,7 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <div class="d-flex gap-2 justify-end">
+          <div class="d-flex gap-2 justify-end" @click.stop>
             <v-btn
               icon="mdi-school"
               size="small"
@@ -267,6 +269,65 @@
         </p>
       </div>
     </v-card>
+
+    <v-dialog v-model="dialogDetalhes" max-width="600">
+      <v-card v-if="ditadoDetalhes">
+        <v-card-title class="bg-primary text-white pa-4 d-flex justify-space-between align-center">
+          <span>
+            <v-icon class="mr-2">mdi-headphones</v-icon>
+            Visualizar Ditado
+          </span>
+          <v-btn icon="mdi-close" variant="text" color="white" @click="dialogDetalhes = false"></v-btn>
+        </v-card-title>
+        
+        <v-card-text class="pa-6">
+          <h2 class="text-h5 font-weight-bold mb-2">{{ ditadoDetalhes.titulo }}</h2>
+          <v-chip class="mb-4" size="small" v-if="ditadoDetalhes.categorias.length">
+             {{ ditadoDetalhes.categorias.map(c => c.nome).join(', ') }}
+          </v-chip>
+
+          <p class="text-body-1 mb-4 text-grey-darken-3" style="white-space: pre-wrap;">
+            {{ ditadoDetalhes.descricao }}
+          </p>
+
+          <v-divider class="my-4"></v-divider>
+
+          <div class="bg-grey-lighten-4 pa-4 rounded mb-4">
+            <div class="text-caption text-grey-darken-1 mb-2 font-weight-bold">TEXTO ORIGINAL (COM MARCAÇÕES):</div>
+            <p class="font-italic text-body-2">
+              {{ ditadoDetalhes.textoComMarcacoes || 'Texto não disponível' }}
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="text-caption text-grey-darken-1 mb-2">ÁUDIO DO DITADO</div>
+            <audio 
+              v-if="ditadoDetalhes.audioBase64" 
+              controls 
+              class="w-100"
+              :src="getAudioSrc(ditadoDetalhes.audioBase64)"
+            >
+              Seu navegador não suporta o elemento de áudio.
+            </audio>
+            <div v-else class="text-error pa-4 border border-error rounded">
+              <v-icon>mdi-volume-off</v-icon> Áudio não disponível para este ditado.
+            </div>
+          </div>
+        </v-card-text>
+
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-school"
+            @click="atribuirDoDetalhe(ditadoDetalhes)"
+          >
+            Atribuir a Turma
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="dialogAtribuirTurma" max-width="500" persistent>
       <v-card>
@@ -382,7 +443,11 @@ const ditadoSelecionado = ref(null)
 const dialogDelete = ref(false)
 const deletando = ref(false)
 
-// Tabela de Ditados Atribuídos (NOVO)
+// Detalhes do Ditado (Visualização)
+const dialogDetalhes = ref(false)
+const ditadoDetalhes = ref(null)
+
+// Tabela de Ditados Atribuídos
 const ditadosAtribuidos = ref([])
 const carregandoAtribuidos = ref(false)
 
@@ -459,7 +524,6 @@ async function carregarDitados() {
 async function carregarDitadosAtribuidos() {
   carregandoAtribuidos.value = true
   try {
-    // Busca apenas os ditados que EU atribuí recentemente
     const dados = await ditadoService.listarMeusDitadosAtribuidos()
     ditadosAtribuidos.value = dados
   } catch (erro) {
@@ -479,12 +543,64 @@ async function carregarTurmas() {
   }
 }
 
+// --- LÓGICA DE VISUALIZAÇÃO DE DETALHES ---
+
+// Substitua a função antiga por esta versão corrigida
+async function abrirDetalhesDitado(event, { item }) {
+  try {
+    const idParaBuscar = item.id || item.ditadoId;
+    
+    if (!idParaBuscar) {
+      mostrarSnackbar('Erro: ID do ditado inválido.', 'error');
+      return;
+    }
+
+    // 1. Preenchemos o modal imediatamente com o que já temos na tabela
+    // (Isso evita que o modal fique vazio enquanto carrega)
+    ditadoDetalhes.value = { ...item }; 
+    dialogDetalhes.value = true;
+
+    // 2. O PULO DO GATO 🐈: Usamos a rota "buscarParaRealizar"
+    // Essa é a única rota que confirmamos que retorna o 'audioBase64'.
+    // A rota antiga (buscarPorId) estava dando erro 405.
+    const dadosCompletos = await ditadoService.buscarParaRealizar(idParaBuscar);
+    
+    console.log('Dados recebidos com sucesso:', dadosCompletos);
+
+    // 3. Atualizamos o modal com o áudio e o texto completo
+    ditadoDetalhes.value = {
+      ...ditadoDetalhes.value, // Mantém os dados que já tínhamos
+      audioBase64: dadosCompletos.audioBase64, // O áudio que funciona!
+      textoComMarcacoes: dadosCompletos.textoComMarcacoes || item.descricao
+    };
+    
+  } catch (erro) {
+    console.error('Erro ao carregar áudio:', erro);
+    
+    // Dica para depuração: Se der erro 403, é porque o professor não tem permissão nessa rota.
+    // Se der 404, o ID está errado.
+    mostrarSnackbar('Não foi possível carregar o áudio. Tente novamente.', 'warning');
+  }
+}
+
+function getAudioSrc(base64) {
+  if (!base64) return ''
+  // Verifica se já tem o prefixo data URI
+  if (base64.startsWith('data:audio')) return base64
+  // Se não tiver, adiciona
+  return `data:audio/mp3;base64,${base64}`
+}
+
+function atribuirDoDetalhe(ditado) {
+  dialogDetalhes.value = false
+  abrirDialogAtribuirTurma(ditado)
+}
+
 // --- LÓGICA DE NEGÓCIO ---
 
 function filtrarDitados() {
   let resultado = [...ditados.value]
 
-  // Filtro de Texto
   if (pesquisa.value.trim()) {
     const termo = pesquisa.value.toLowerCase()
     resultado = resultado.filter(d =>
@@ -493,7 +609,6 @@ function filtrarDitados() {
     )
   }
 
-  // Filtro de Categoria
   if (filtroCategoria.value.length > 0) {
     resultado = resultado.filter(ditado =>
       ditado.categorias &&
@@ -503,9 +618,7 @@ function filtrarDitados() {
     )
   }
 
-  // Ordenação Padrão (Mais recentes primeiro)
   resultado.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao))
-
   ditadosFiltrados.value = resultado
 }
 
@@ -522,7 +635,6 @@ function deletarDitado(ditado) {
 async function confirmarDelecao() {
   deletando.value = true
   try {
-    // Em produção: await ditadoService.deletar(ditadoSelecionado.value.id)
     ditados.value = ditados.value.filter(d => d.id !== ditadoSelecionado.value.id)
     filtrarDitados()
     mostrarSnackbar('Ditado excluído com sucesso!', 'success')
@@ -557,7 +669,6 @@ function removerFiltroCategoria(categoriaId) {
   filtrarDitados()
 }
 
-// Contagem de palavras omitidas (Texto ou Descrição)
 function calcularPalavrasOmitidas(ditado) {
   const textoParaAnalisar = ditado.textoComMarcacoes || ditado.descricao || '';
   if (!textoParaAnalisar) return ditado.palavrasOmitidas || 0;
@@ -611,24 +722,19 @@ async function confirmarAtribuicaoTurma() {
 
   atribuindoTurma.value = true
   try {
-    // Converter data para formato ISO se foi fornecida e não está vazia
     let dataLimite = null
-    if (dataLimiteAtribuicao.value && dataLimiteAtribuicao.value.trim() !== '') {
+    if (dataLimiteAtribuicao.value) {
       dataLimite = new Date(dataLimiteAtribuicao.value).toISOString()
     }
     
     await turmaService.atribuirDitado(turmaParaAtribuir.value, ditadoSelecionado.value.id, dataLimite)
-    
-    // Atualiza a lista de atribuídos na hora
     await carregarDitadosAtribuidos()
     
     mostrarSnackbar(`Ditado atribuído à turma com sucesso`, 'success')
     fecharDialogAtribuirTurma()
   } catch (erro) {
     console.error('Erro ao atribuir ditado à turma:', erro)
-    // Extrai mensagem específica do erro
-    const mensagem = erro.message || 'Erro ao atribuir ditado à turma'
-    mostrarSnackbar(mensagem, 'error')
+    mostrarSnackbar('Erro ao atribuir ditado à turma', 'error')
   } finally {
     atribuindoTurma.value = false
   }
@@ -642,4 +748,10 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 <style scoped>
 .gap-2 { gap: 8px; }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; }
+.cursor-pointer-row :deep(tbody tr) {
+  cursor: pointer;
+}
+.cursor-pointer-row :deep(tbody tr:hover) {
+  background-color: #f5f5f5 !important;
+}
 </style>
