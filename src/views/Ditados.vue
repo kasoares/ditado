@@ -326,6 +326,8 @@ const opcoesOrdenacao = [
   { title: 'Z-A', value: 'alfabetico-inv' }
 ]
 
+
+
 const computedCarregando = computed(() => carregando.value)
 
 onMounted(async () => {
@@ -446,12 +448,32 @@ function removerFiltroCategoria(categoriaId) {
 }
 
 function calcularPalavrasOmitidas(ditado) {
-  if (!ditado.textoComMarcacoes) {
-    return ditado.palavrasOmitidas || 0
+  // 1. Tenta pegar o texto de onde estiver disponível (Texto Oficial OU Descrição)
+  const textoParaAnalisar = ditado.textoComMarcacoes || ditado.descricao || '';
+
+  // 2. Se não tiver texto nenhum, retorna o valor que veio do banco ou 0
+  if (!textoParaAnalisar) {
+    return ditado.palavrasOmitidas || 0;
   }
-  // Contar as palavras entre colchetes [palavra]
-  const matches = ditado.textoComMarcacoes.match(/\[([^\]]+)\]/g)
-  return matches ? matches.length : (ditado.palavrasOmitidas || 0)
+
+  // 3. Procura pelos colchetes [palavra]
+  const matches = textoParaAnalisar.match(/\[([^\]]+)\]/g);
+  
+  // 4. Retorna a contagem real encontrada
+  return matches ? matches.length : 0;
+}
+
+
+// Função para contar ocorrências de palavras entre colchetes [ ]
+function contarLacunas(texto) {
+  if (!texto) return 0;
+  
+  // A mágica acontece aqui: 
+  // O Regex procura por tudo que começa com '[' e termina com ']'
+  const lacunas = texto.match(/\[(.*?)\]/g);
+  
+  // Retorna a quantidade encontrada ou 0 se não achar nada
+  return lacunas ? lacunas.length : 0;
 }
 
 function mostrarSnackbar(mensagem, cor = 'success') {
