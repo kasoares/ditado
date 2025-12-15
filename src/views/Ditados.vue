@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Header -->
     <v-card class="mb-6" elevation="1">
       <v-card-text class="pa-6">
         <div class="d-flex align-center justify-space-between">
@@ -23,7 +22,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Filtro e Busca -->
     <v-card class="mb-6" elevation="1">
       <v-card-text class="pa-6">
         <v-row class="g-4">
@@ -31,7 +29,7 @@
             <v-text-field
               v-model="pesquisa"
               prepend-inner-icon="mdi-magnify"
-              placeholder="Filtrar ditados"
+              placeholder="Filtrar ditados cadastrados"
               variant="outlined"
               density="comfortable"
               @update:model-value="filtrarDitados"
@@ -75,11 +73,101 @@
       </v-card-text>
     </v-card>
 
-    <!-- Tabela de Ditados -->
+    <v-card class="mb-6" elevation="1">
+      <v-card-title class="bg-blue-grey-lighten-5 pa-4 d-flex align-center">
+        <v-icon class="mr-2" color="primary">mdi-calendar-check</v-icon>
+        Ditados Atribuídos (Últimos 30 dias)
+      </v-card-title>
+
+      <v-data-table
+        :headers="headersAtribuidos"
+        :items="ditadosAtribuidos"
+        :loading="carregandoAtribuidos"
+        density="comfortable"
+        class="elevation-0"
+      >
+        <template v-slot:item.turmaNome="{ item }">
+          <div class="font-weight-medium text-primary">{{ item.turmaNome }}</div>
+        </template>
+
+        <template v-slot:item.ditadoTitulo="{ item }">
+          <div class="font-weight-bold">{{ item.ditadoTitulo }}</div>
+        </template>
+
+        <template v-slot:item.dataLimite="{ item }">
+          <div :class="item.vencido ? 'text-error font-weight-bold' : ''">
+            {{ formatarData(item.dataLimite) }}
+            <v-icon v-if="item.vencido" size="small" color="error" class="ml-1" title="Prazo encerrado">
+              mdi-clock-alert
+            </v-icon>
+          </div>
+        </template>
+
+        <template v-slot:item.vencido="{ item }">
+          <v-chip 
+            :color="item.vencido ? 'grey' : 'success'" 
+            size="small" 
+            variant="flat"
+          >
+            {{ item.vencido ? 'Encerrado' : 'Aberto' }}
+          </v-chip>
+        </template>
+
+        <template v-slot:item.percentualConclusao="{ item }">
+          <div class="d-flex align-center" style="min-width: 140px">
+            <v-progress-linear
+              :model-value="item.percentualConclusao"
+              :color="getCorProgresso(item.percentualConclusao)"
+              height="8"
+              rounded
+              class="mr-2 flex-grow-1"
+            ></v-progress-linear>
+            <span class="text-caption font-weight-bold" style="min-width: 35px">
+              {{ item.percentualConclusao.toFixed(0) }}%
+            </span>
+          </div>
+          <div class="text-caption text-grey text-center mt-1">
+             {{ item.alunosQueFizeram }} de {{ item.totalAlunos }} alunos
+          </div>
+        </template>
+
+        <template v-slot:item.notaMedia="{ item }">
+          <v-chip 
+            v-if="item.alunosQueFizeram > 0"
+            :color="obterCorNota(item.notaMedia)" 
+            variant="outlined" 
+            size="small"
+            class="font-weight-bold"
+          >
+             {{ item.notaMedia.toFixed(1) }}%
+          </v-chip>
+          <span v-else class="text-grey text-caption">-</span>
+        </template>
+
+        <template v-slot:item.acoes="{ item }">
+          <v-btn
+            icon="mdi-chart-box-outline"
+            size="small"
+            variant="text"
+            color="primary"
+            title="Ver resultados detalhados"
+            @click="verResultadosTurma(item)"
+          />
+        </template>
+
+        <template v-slot:no-data>
+          <div class="text-center pa-6 text-grey">
+            <v-icon size="40" color="grey-lighten-2" class="mb-2">mdi-school-outline</v-icon>
+            <p>Nenhum ditado atribuído nos últimos 30 dias.</p>
+          </div>
+        </template>
+      </v-data-table>
+    </v-card>
+
     <v-card elevation="1">
       <v-card-title class="bg-grey-lighten-5 pa-4">
-        <v-icon class="mr-2">mdi-file-document</v-icon>
-        Ditados Cadastrados
+        <v-icon class="mr-2">mdi-file-document-multiple</v-icon>
+        Biblioteca de Ditados Cadastrados
       </v-card-title>
 
       <v-data-table
@@ -116,7 +204,7 @@
         </template>
 
         <template v-slot:item.palavrasOmitidas="{ item }">
-          <v-chip color="primary" variant="flat">
+          <v-chip color="primary" variant="flat" size="small">
             {{ calcularPalavrasOmitidas(item) }}
           </v-chip>
         </template>
@@ -126,7 +214,7 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 justify-end">
             <v-btn
               icon="mdi-school"
               size="small"
@@ -171,16 +259,15 @@
 
       <div v-else class="pa-6 text-center">
         <v-icon size="64" color="grey-lighten-1" class="mb-4">
-          mdi-file-document-outline
+          mdi-magnify
         </v-icon>
         <p class="text-h6 text-grey-darken-1 mb-2">Nenhum ditado encontrado</p>
         <p class="text-body-2 text-grey-darken-2">
-          Nenhum resultado corresponde aos critérios de busca
+          Tente ajustar os filtros de busca
         </p>
       </div>
     </v-card>
 
-    <!-- Dialog de Atribuição de Ditado a Turma -->
     <v-dialog v-model="dialogAtribuirTurma" max-width="500" persistent>
       <v-card>
         <v-card-title class="bg-primary text-white pa-4">
@@ -208,7 +295,7 @@
           <v-text-field
             v-model="dataLimiteAtribuicao"
             type="date"
-            label="Data limite (opcional)"
+            label="Data limite para entrega"
             variant="outlined"
             density="comfortable"
             hide-details
@@ -226,18 +313,16 @@
             :disabled="!turmaParaAtribuir"
             @click="confirmarAtribuicaoTurma"
           >
-            Atribuir
+            Confirmar Atribuição
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
     </v-snackbar>
 
-    <!-- Dialog de Confirmação de Exclusão -->
     <v-dialog v-model="dialogDelete" max-width="400">
       <v-card>
         <v-card-title class="bg-red-lighten-5 pa-4">
@@ -285,19 +370,24 @@ import { turmaService } from '@/services/turmaService'
 const router = useRouter()
 const authStore = useAuthStore()
 
+// --- ESTADOS ---
+
+// Tabela de Ditados Cadastrados
 const ditados = ref([])
 const ditadosFiltrados = ref([])
 const carregando = ref(false)
 const pesquisa = ref('')
-const ordenacao = ref('recentes')
 const filtroCategoria = ref([])
 const ditadoSelecionado = ref(null)
 const dialogDelete = ref(false)
 const deletando = ref(false)
 
-const categorias = ref([])
+// Tabela de Ditados Atribuídos (NOVO)
+const ditadosAtribuidos = ref([])
+const carregandoAtribuidos = ref(false)
 
-// Para atribuição de ditado a turma
+// Auxiliares
+const categorias = ref([])
 const turmas = ref([])
 const dialogAtribuirTurma = ref(false)
 const turmaParaAtribuir = ref(null)
@@ -310,29 +400,39 @@ const snackbar = ref({
   color: 'success'
 })
 
+// --- DEFINIÇÃO DE COLUNAS (HEADERS) ---
+
 const headers = [
   { title: 'Título', key: 'titulo', sortable: true },
   { title: 'Descrição', key: 'descricao' },
   { title: 'Categorias', key: 'categorias' },
   { title: 'Palavras Omitidas', key: 'palavrasOmitidas', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', sortable: false }
+  { title: 'Ações', key: 'acoes', align: 'end', sortable: false }
 ]
 
-const opcoesOrdenacao = [
-  { title: 'Mais Recentes', value: 'recentes' },
-  { title: 'Mais Antigos', value: 'antigos' },
-  { title: 'A-Z', value: 'alfabetico' },
-  { title: 'Z-A', value: 'alfabetico-inv' }
+const headersAtribuidos = [
+  { title: 'Turma', key: 'turmaNome' },
+  { title: 'Ditado', key: 'ditadoTitulo' },
+  { title: 'Prazo', key: 'dataLimite', align: 'center' },
+  { title: 'Status', key: 'vencido', align: 'center' },
+  { title: 'Engajamento', key: 'percentualConclusao', align: 'center', minWidth: '150px' },
+  { title: 'Média da Turma', key: 'notaMedia', align: 'center' },
+  { title: 'Detalhes', key: 'acoes', align: 'center', sortable: false }
 ]
 
-
-
-const computedCarregando = computed(() => carregando.value)
+// --- INICIALIZAÇÃO ---
 
 onMounted(async () => {
-  await Promise.all([carregarDitados(), carregarCategorias(), carregarTurmas()])
+  await Promise.all([
+    carregarDitados(), 
+    carregarDitadosAtribuidos(),
+    carregarCategorias(), 
+    carregarTurmas()
+  ])
 })
+
+// --- CARREGAMENTO DE DADOS ---
 
 async function carregarCategorias() {
   try {
@@ -356,10 +456,35 @@ async function carregarDitados() {
   }
 }
 
+async function carregarDitadosAtribuidos() {
+  carregandoAtribuidos.value = true
+  try {
+    // Busca apenas os ditados que EU atribuí recentemente
+    const dados = await ditadoService.listarMeusDitadosAtribuidos()
+    ditadosAtribuidos.value = dados
+  } catch (erro) {
+    console.error('Erro ao carregar ditados atribuídos:', erro)
+  } finally {
+    carregandoAtribuidos.value = false
+  }
+}
+
+async function carregarTurmas() {
+  try {
+    const dados = await turmaService.listarTodas(true) // apenas ativas
+    turmas.value = dados || []
+  } catch (erro) {
+    console.error('Erro ao carregar turmas:', erro)
+    turmas.value = []
+  }
+}
+
+// --- LÓGICA DE NEGÓCIO ---
+
 function filtrarDitados() {
   let resultado = [...ditados.value]
 
-  // Aplicar pesquisa
+  // Filtro de Texto
   if (pesquisa.value.trim()) {
     const termo = pesquisa.value.toLowerCase()
     resultado = resultado.filter(d =>
@@ -368,7 +493,7 @@ function filtrarDitados() {
     )
   }
 
-  // Aplicar filtro de categorias
+  // Filtro de Categoria
   if (filtroCategoria.value.length > 0) {
     resultado = resultado.filter(ditado =>
       ditado.categorias &&
@@ -378,31 +503,14 @@ function filtrarDitados() {
     )
   }
 
-  // Aplicar ordenação
-  switch (ordenacao.value) {
-    case 'recentes':
-      resultado.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao))
-      break
-    case 'antigos':
-      resultado.sort((a, b) => new Date(a.dataCriacao) - new Date(b.dataCriacao))
-      break
-    case 'alfabetico':
-      resultado.sort((a, b) => a.titulo.localeCompare(b.titulo))
-      break
-    case 'alfabetico-inv':
-      resultado.sort((a, b) => b.titulo.localeCompare(a.titulo))
-      break
-  }
+  // Ordenação Padrão (Mais recentes primeiro)
+  resultado.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao))
 
   ditadosFiltrados.value = resultado
 }
 
 function podeDelete(ditado) {
-  // Admins podem deletar qualquer ditado
-  if (authStore.ehAdministrador) {
-    return true
-  }
-  // Professores podem deletar apenas seus próprios ditados (criados por eles)
+  if (authStore.ehAdministrador) return true
   return ditado.autorId === authStore.usuario?.id
 }
 
@@ -414,8 +522,7 @@ function deletarDitado(ditado) {
 async function confirmarDelecao() {
   deletando.value = true
   try {
-    // Chamada ao serviço seria: await ditadoService.deletar(ditadoSelecionado.value.id)
-    // Por enquanto, apenas removemos da lista local
+    // Em produção: await ditadoService.deletar(ditadoSelecionado.value.id)
     ditados.value = ditados.value.filter(d => d.id !== ditadoSelecionado.value.id)
     filtrarDitados()
     mostrarSnackbar('Ditado excluído com sucesso!', 'success')
@@ -429,11 +536,14 @@ async function confirmarDelecao() {
   }
 }
 
+// --- AUXILIARES VISUAIS ---
+
 function formatarData(data) {
+  if (!data) return '-'
   return new Date(data).toLocaleDateString('pt-BR', {
-    year: 'numeric',
+    day: '2-digit',
     month: '2-digit',
-    day: '2-digit'
+    year: 'numeric'
   })
 }
 
@@ -447,52 +557,37 @@ function removerFiltroCategoria(categoriaId) {
   filtrarDitados()
 }
 
+// Contagem de palavras omitidas (Texto ou Descrição)
 function calcularPalavrasOmitidas(ditado) {
-  // 1. Tenta pegar o texto de onde estiver disponível (Texto Oficial OU Descrição)
   const textoParaAnalisar = ditado.textoComMarcacoes || ditado.descricao || '';
-
-  // 2. Se não tiver texto nenhum, retorna o valor que veio do banco ou 0
-  if (!textoParaAnalisar) {
-    return ditado.palavrasOmitidas || 0;
-  }
-
-  // 3. Procura pelos colchetes [palavra]
+  if (!textoParaAnalisar) return ditado.palavrasOmitidas || 0;
   const matches = textoParaAnalisar.match(/\[([^\]]+)\]/g);
-  
-  // 4. Retorna a contagem real encontrada
   return matches ? matches.length : 0;
 }
 
-
-// Função para contar ocorrências de palavras entre colchetes [ ]
-function contarLacunas(texto) {
-  if (!texto) return 0;
-  
-  // A mágica acontece aqui: 
-  // O Regex procura por tudo que começa com '[' e termina com ']'
-  const lacunas = texto.match(/\[(.*?)\]/g);
-  
-  // Retorna a quantidade encontrada ou 0 se não achar nada
-  return lacunas ? lacunas.length : 0;
+function obterCorNota(nota) {
+  if (nota >= 80) return 'success'
+  if (nota >= 60) return 'warning'
+  return 'error'
 }
 
-function mostrarSnackbar(mensagem, cor = 'success') {
-  snackbar.value = {
-    show: true,
-    mensagem,
-    color: cor
-  }
+function getCorProgresso(percentual) {
+  if (percentual >= 80) return 'success'
+  if (percentual >= 40) return 'primary'
+  return 'warning'
 }
 
-async function carregarTurmas() {
-  try {
-    const dados = await turmaService.listarTodas(true) // apenas turmas ativas
-    turmas.value = dados || []
-  } catch (erro) {
-    console.error('Erro ao carregar turmas:', erro)
-    turmas.value = []
-  }
+function verResultadosTurma(item) {
+  router.push({
+    name: "ResultadosDitadoProfessor",
+    params: {
+      turmaId: item.turmaId,
+      ditadoId: item.ditadoId,
+    },
+  });
 }
+
+// --- DIALOGS E FEEDBACK ---
 
 function abrirDialogAtribuirTurma(ditado) {
   ditadoSelecionado.value = ditado
@@ -516,13 +611,15 @@ async function confirmarAtribuicaoTurma() {
 
   atribuindoTurma.value = true
   try {
-    // Converter data para formato ISO se foi fornecida
     let dataLimite = null
     if (dataLimiteAtribuicao.value) {
       dataLimite = new Date(dataLimiteAtribuicao.value).toISOString()
     }
-
+    
     await turmaService.atribuirDitado(turmaParaAtribuir.value, ditadoSelecionado.value.id, dataLimite)
+    
+    // Atualiza a lista de atribuídos na hora
+    await carregarDitadosAtribuidos()
     
     mostrarSnackbar(`Ditado atribuído à turma com sucesso`, 'success')
     fecharDialogAtribuirTurma()
@@ -534,15 +631,12 @@ async function confirmarAtribuicaoTurma() {
   }
 }
 
+function mostrarSnackbar(mensagem, cor = 'success') {
+  snackbar.value = { show: true, mensagem, color: cor }
+}
 </script>
 
 <style scoped>
-.gap-2 {
-  gap: 8px;
-}
-
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.gap-2 { gap: 8px; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; }
 </style>
