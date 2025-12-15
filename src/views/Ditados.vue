@@ -734,8 +734,25 @@ async function confirmarAtribuicaoTurma() {
     fecharDialogAtribuirTurma()
   } catch (erro) {
     console.error('Erro ao atribuir ditado à turma:', erro)
-    const mensagemErro = erro.response?.data?.mensagem || erro.response?.data?.detail || erro.response?.data?.title || erro.response?.data?.message || 'Erro ao atribuir ditado à turma'
-    mostrarSnackbar(mensagemErro, 'error')
+    
+    // Tratamento específico para erro 400 (ditado já atribuído)
+    if (erro.response?.status === 400) {
+      const mensagemErro = erro.message || erro.response?.data?.mensagem || erro.response?.data?.title || erro.response?.data?.message
+      
+      // Verifica se é erro de ditado já atribuído
+      if (mensagemErro && (
+        mensagemErro.toLowerCase().includes('já') || 
+        mensagemErro.toLowerCase().includes('atribuído') ||
+        mensagemErro.toLowerCase().includes('atribuido')
+      )) {
+        mostrarSnackbar('Este ditado já está atribuído a esta turma', 'warning')
+      } else {
+        mostrarSnackbar(mensagemErro || 'Este ditado já está atribuído a esta turma', 'warning')
+      }
+    } else {
+      const mensagemErro = erro.response?.data?.mensagem || erro.response?.data?.detail || erro.response?.data?.title || erro.response?.data?.message || 'Erro ao atribuir ditado à turma'
+      mostrarSnackbar(mensagemErro, 'error')
+    }
   } finally {
     atribuindoTurma.value = false
   }

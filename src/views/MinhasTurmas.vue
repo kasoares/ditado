@@ -282,11 +282,10 @@ async function carregarSolicitacoesPendentes() {
 async function abrirDitadosTurma(turma) {
   turmaSelecionada.value = turma
   try {
-    // Por enquanto, carregamos ditados disponíveis, não especificamente da turma
-    // Pois a API pode não retornar ditados por turma ainda
-    ditadosTurma.value = await ditadoService.listarTodos()
+    // Carregar apenas os ditados atribuídos à turma específica
+    ditadosTurma.value = await turmaService.listarDitados(turma.id)
   } catch (erro) {
-    console.error('Erro ao carregar ditados:', erro)
+    console.error('Erro ao carregar ditados da turma:', erro)
     mostrarSnackbar('Erro ao carregar ditados', 'error')
   }
   dialogDitados.value = true
