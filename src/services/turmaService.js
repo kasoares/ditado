@@ -156,13 +156,19 @@ export const turmaService = {
   // ATRIBUIR DITADO À TURMA
   async atribuirDitado(turmaId, ditadoId, dataLimite) {
     try {
-      const response = await api.post(`/Turmas/${turmaId}/ditados`, {
-        ditadoId,
-        dataLimite
-      })
+      const payload = { ditadoId }
+      if (dataLimite) {
+        payload.dataLimite = dataLimite
+      }
+      console.log('[TurmaService] Atribuindo ditado:', { turmaId, ditadoId, dataLimite, payload })
+      const response = await api.post(`/Turmas/${turmaId}/ditados`, payload)
       return response.data
     } catch (erro) {
-      console.error('Erro ao atribuir ditado à turma:', erro.response?.data || erro)
+      console.error('[TurmaService] ERRO ao atribuir ditado:', {
+        status: erro.response?.status,
+        data: erro.response?.data,
+        mensagem: erro.message
+      })
       throw erro
     }
   },

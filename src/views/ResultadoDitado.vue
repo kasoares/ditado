@@ -2,6 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12">
+        <!-- Resumo do Ditado -->
         <v-card elevation="1" class="mb-6">
           <v-card-title class="pa-6 d-flex align-center border-b">
             <v-icon class="mr-3" color="primary">mdi-chart-bar</v-icon>
@@ -13,25 +14,25 @@
           </v-card-title>
           <v-card-text class="pa-6">
             <v-row>
-              <v-col cols="12" md="4">
+              <v-col cols="6" sm="4" md="2">
                 <v-list-item>
                   <v-list-item-subtitle>Total de Alunos</v-list-item-subtitle>
                   <v-list-item-title class="text-h6">{{ resultados.totalAlunos }}</v-list-item-title>
                 </v-list-item>
               </v-col>
-              <v-col cols="12" md="4">
+              <v-col cols="6" sm="4" md="2">
                 <v-list-item>
                   <v-list-item-subtitle>Alunos que Fizeram</v-list-item-subtitle>
                   <v-list-item-title class="text-h6">{{ resultados.alunosQueFizeram }}</v-list-item-title>
                 </v-list-item>
               </v-col>
-              <v-col cols="12" md="4">
+              <v-col cols="6" sm="4" md="2">
                 <v-list-item>
                   <v-list-item-subtitle>Percentual de Conclusão</v-list-item-subtitle>
-                  <v-list-item-title class="text-h6">{{ resultados.percentualConclusao }}%</v-list-item-title>
+                  <v-list-item-title class="text-h6">{{ resultados.percentualConclusao?.toFixed(1) }}%</v-list-item-title>
                 </v-list-item>
               </v-col>
-              <v-col cols="12" md="4">
+              <v-col cols="6" sm="4" md="2">
                 <v-list-item>
                   <v-list-item-subtitle>Nota Média da Turma</v-list-item-subtitle>
                   <v-list-item-title class="text-h6">{{ resultados.notaMedia?.toFixed(1) }}</v-list-item-title>
@@ -41,71 +42,92 @@
           </v-card-text>
         </v-card>
 
-        <!-- Resultados dos Alunos -->
-        <v-card elevation="1" class="mb-6">
-          <v-card-title class="pa-6 d-flex align-center border-b">
-            <v-icon class="mr-3" color="info">mdi-account-multiple</v-icon>
-            <span class="text-h6 font-weight-bold">Resultados dos Alunos</span>
-          </v-card-title>
-          <v-card-text class="pa-6">
-            <v-data-table
-              :headers="headersAlunos"
-              :items="resultados.alunos"
-              item-key="alunoId"
-              class="elevation-1"
-              no-data-text="Nenhum aluno encontrou resultados para este ditado."
-            >
-              <template v-slot:item.fez="{ item }">
-                <v-icon :color="item.fez ? 'success' : 'error'">
-                  {{ item.fez ? 'mdi-check-circle' : 'mdi-close-circle' }}
-                </v-icon>
-              </template>
-              <template v-slot:item.dataEntrega="{ item }">
-                {{ item.dataEntrega ? formatarData(item.dataEntrega) : '-' }}
-              </template>
-              <template v-slot:item.nota="{ item }">
-                <v-chip
-                  :color="obterCorNota(item.nota)"
-                  variant="flat"
-                  size="small"
-                  v-if="item.fez"
-                >
-                  {{ item.nota?.toFixed(1) }}%
-                </v-chip>
-                <span v-else>-</span>
-              </template>
-              <template v-slot:item.atrasado="{ item }">
-                <v-icon :color="item.atrasado ? 'warning' : 'success'" v-if="item.fez">
-                  {{ item.atrasado ? 'mdi-clock-alert' : 'mdi-check' }}
-                </v-icon>
-                <span v-else>-</span>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
-
         <!-- Gráfico de Erros por Tipo -->
-        <v-card elevation="1">
+        <v-card elevation="1" class="mb-6">
           <v-card-title class="pa-6 d-flex align-center border-b">
             <v-icon class="mr-3" color="warning">mdi-alert-circle</v-icon>
             <span class="text-h6 font-weight-bold">Erros por Tipo</span>
           </v-card-title>
           <v-card-text class="pa-6">
             <div v-if="resultados.errosPorTipo && resultados.errosPorTipo.length > 0">
-              <v-list density="compact">
-                <v-list-item v-for="erro in resultados.errosPorTipo" :key="erro.tipoErroId">
-                  <v-list-item-title>{{ erro.descricao }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ erro.descricaoCurta }}</v-list-item-subtitle>
-                  <template v-slot:append>
-                    <v-chip color="error" variant="flat">{{ erro.quantidade }}</v-chip>
-                  </template>
-                </v-list-item>
-              </v-list>
+              <div class="erros-chart">
+                <div 
+                  v-for="erro in errosOrdenados" 
+                  :key="erro.tipoErroId" 
+                  class="erro-bar-container mb-3"
+                >
+                  <div class="d-flex justify-space-between align-center mb-1">
+                    <span class="text-body-2 font-weight-medium">{{ erro.descricaoCurta }}:</span>
+                    <span class="text-body-2 font-weight-bold">{{ erro.quantidade }}</span>
+                  </div>
+                  <div class="erro-bar-bg">
+                    <div 
+                      class="erro-bar" 
+                      :style="{ width: calcularLarguraBarra(erro.quantidade) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div v-else class="text-center py-6">
               <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
               <p class="text-body-1 text-grey mt-2">Nenhum erro registrado para este ditado.</p>
             </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- Resultados dos Alunos -->
+        <v-card elevation="1" class="mb-6">
+          <v-card-title class="pa-6 d-flex align-center border-b">
+            <v-icon class="mr-3" color="info">mdi-account-multiple</v-icon>
+            <span class="text-h6 font-weight-bold">Resultados dos Alunos</span>
+          </v-card-title>
+          <v-card-text class="pa-0">
+            <v-table>
+              <thead>
+                <tr>
+                  <th class="text-left">Nome do Aluno</th>
+                  <th class="text-left">Matrícula</th>
+                  <th class="text-center">Fez o Ditado</th>
+                  <th class="text-center">Data de Entrega</th>
+                  <th class="text-center">Nota (1ª Tentativa)</th>
+                  <th class="text-left">Erro Mais Comum</th>
+                  <th class="text-center">Entregou Atrasado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="aluno in resultados.alunos" :key="aluno.alunoId">
+                  <td>{{ aluno.nome }}</td>
+                  <td>{{ aluno.matricula || '-' }}</td>
+                  <td class="text-center">
+                    <v-icon :color="aluno.fez ? 'success' : 'error'">
+                      {{ aluno.fez ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                    </v-icon>
+                  </td>
+                  <td class="text-center">
+                    {{ aluno.dataEntrega ? formatarData(aluno.dataEntrega) : '-' }}
+                  </td>
+                  <td class="text-center">
+                    <v-chip
+                      v-if="aluno.fez"
+                      :color="obterCorNota(aluno.nota)"
+                      variant="flat"
+                      size="small"
+                    >
+                      {{ aluno.nota?.toFixed(1) }}%
+                    </v-chip>
+                    <span v-else>-</span>
+                  </td>
+                  <td>{{ aluno.erroMaisComum || '-' }}</td>
+                  <td class="text-center">
+                    <v-icon v-if="aluno.fez" :color="aluno.atrasado ? 'warning' : 'success'">
+                      {{ aluno.atrasado ? 'mdi-clock-alert' : 'mdi-check' }}
+                    </v-icon>
+                    <span v-else>-</span>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
           </v-card-text>
         </v-card>
       </v-col>
@@ -118,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { ditadoService } from '@/services/ditadoService';
 
@@ -132,15 +154,21 @@ const snackbar = ref({
   color: 'info',
 });
 
-const headersAlunos = [
-  { title: 'Nome do Aluno', key: 'nome' },
-  { title: 'Matrícula', key: 'matricula' },
-  { title: 'Fez o Ditado', key: 'fez', align: 'center' },
-  { title: 'Data de Entrega', key: 'dataEntrega', align: 'center' },
-  { title: 'Nota (1ª Tentativa)', key: 'nota', align: 'center' },
-  { title: 'Erro Mais Comum', key: 'erroMaisComum' },
-  { title: 'Entregou Atrasado', key: 'atrasado', align: 'center' },
-];
+// Erros ordenados por quantidade (maior para menor)
+const errosOrdenados = computed(() => {
+  if (!resultados.value.errosPorTipo) return [];
+  return [...resultados.value.errosPorTipo].sort((a, b) => b.quantidade - a.quantidade);
+});
+
+// Calcula a largura da barra baseado no máximo
+const maxErros = computed(() => {
+  if (!errosOrdenados.value.length) return 1;
+  return Math.max(...errosOrdenados.value.map(e => e.quantidade));
+});
+
+function calcularLarguraBarra(quantidade) {
+  return (quantidade / maxErros.value) * 100;
+}
 
 onMounted(async () => {
   const turmaId = route.params.turmaId;
@@ -193,5 +221,23 @@ function mostrarSnackbar(mensagem, cor = 'info') {
 <style scoped>
 .border-b {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.erros-chart {
+  max-width: 500px;
+}
+
+.erro-bar-bg {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.erro-bar {
+  background: linear-gradient(90deg, #7c4dff, #536dfe);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 </style>

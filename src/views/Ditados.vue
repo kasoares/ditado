@@ -506,7 +506,8 @@ async function confirmarAtribuicaoTurma() {
     fecharDialogAtribuirTurma()
   } catch (erro) {
     console.error('Erro ao atribuir ditado à turma:', erro)
-    mostrarSnackbar('Erro ao atribuir ditado à turma', 'error')
+    const mensagemErro = erro.response?.data?.mensagem || erro.response?.data?.detail || erro.response?.data?.title || erro.response?.data?.message || 'Erro ao atribuir ditado à turma'
+    mostrarSnackbar(mensagemErro, 'error')
   } finally {
     atribuindoTurma.value = false
   }

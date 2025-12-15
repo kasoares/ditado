@@ -362,27 +362,32 @@
                 <v-list>
                   <v-list-item
                     v-for="ditado in ditadosTurma"
-                    :key="ditado.id"
+                    :key="ditado.ditadoId"
                     class="mb-2"
                   >
                     <template v-slot:prepend>
                       <v-icon color="primary">mdi-file-document</v-icon>
                     </template>
-                    <v-list-item-title>{{ ditado.titulo }}</v-list-item-title>
+                    <v-list-item-title>{{ ditado.ditadoTitulo }}</v-list-item-title>
                     <v-list-item-subtitle>
-                      <div>
-                        {{ calcularPalavrasOmitidas(ditado) }} palavras
+                      <div v-if="ditado.dataLimite" class="text-caption">
+                        Data limite: {{ formatarData(ditado.dataLimite) }}
+                        <v-chip v-if="ditado.vencido" color="error" size="x-small" class="ml-1">Vencido</v-chip>
                       </div>
                       <div v-if="ditado.categorias && ditado.categorias.length > 0" class="d-flex gap-1 flex-wrap mt-1">
                         <v-chip
-                          v-for="categoria in ditado.categorias"
-                          :key="categoria.id"
+                          v-for="(cat, idx) in ditado.categorias"
+                          :key="idx"
                           size="x-small"
                           variant="outlined"
                           color="secondary"
                         >
-                          {{ categoria.nome }}
+                          {{ cat }}
                         </v-chip>
+                      </div>
+                      <div class="mt-1">
+                        <span class="text-caption">{{ ditado.alunosQueFizeram }}/{{ ditado.totalAlunos }} alunos ({{ ditado.percentualConclusao?.toFixed(0) || 0 }}%)</span>
+                        <span v-if="ditado.notaMedia" class="text-caption ml-2">• Nota média: {{ ditado.notaMedia.toFixed(1) }}</span>
                       </div>
                     </v-list-item-subtitle>
                     <template v-slot:append>
@@ -637,7 +642,6 @@ const regras = {
 onMounted(async () => {
   await Promise.all([
     carregarTurmas(),
-    carregarDitadosDisponiveis(),
     carregarCategorias()
   ])
   await carregarTodosAlunos()
@@ -781,8 +785,24 @@ async function carregarDetalhesTurma(turmaId) {
     const turmaDetalhes = await turmaService.buscarPorId(turmaId)
     turmaSelecionada.value = turmaDetalhes
     membros.value = turmaDetalhes.alunos || []
-    // ditadosTurma e solicitacoesPendentes não são retornados pela API no escopo atual
-    ditadosTurma.value = []
+    
+    // Carregar ditados atribuídos à turma usando o endpoint de professores
+    try {
+      const todosAtribuidos = await ditadoService.listarMeusDitadosAtribuidos()
+      console.log('[Turmas] Todos ditados atribuídos:', todosAtribuidos)
+      console.log('[Turmas] Filtrando por turmaId:', turmaId, 'tipo:', typeof turmaId)
+      // Filtrar apenas os ditados desta turma (comparando como números)
+      const turmaIdNum = Number(turmaId)
+      ditadosTurma.value = (todosAtribuidos || []).filter(d => {
+        console.log('[Turmas] Comparando d.turmaId:', d.turmaId, 'tipo:', typeof d.turmaId, 'com', turmaIdNum)
+        return Number(d.turmaId) === turmaIdNum
+      })
+      console.log('[Turmas] Ditados filtrados:', ditadosTurma.value)
+    } catch (erroDitados) {
+      console.error('Erro ao carregar ditados da turma:', erroDitados)
+      ditadosTurma.value = []
+    }
+    
     solicitacoesPendentes.value = []
   } catch (erro) {
     console.error('Erro ao carregar detalhes da turma:', erro)
@@ -835,14 +855,14 @@ async function confirmarRemocaoMembro() {
 }
 
 async function removerDitado(ditado) {
-  if (confirm(`Deseja remover o ditado "${ditado.titulo}" da turma?`)) {
+  if (confirm(`Deseja remover o ditado "${ditado.ditadoTitulo}" da turma?`)) {
     try {
-      await turmaService.removerAtribuicaoDitado(turmaSelecionada.value.id, ditado.id)
+      await turmaService.removerAtribuicaoDitado(turmaSelecionada.value.id, ditado.ditadoId)
       
       // Remover da lista local
-      ditadosTurma.value = ditadosTurma.value.filter(d => d.id !== ditado.id)
+      ditadosTurma.value = ditadosTurma.value.filter(d => d.ditadoId !== ditado.ditadoId)
       
-      mostrarSnackbar(`Ditado "${ditado.titulo}" removido da turma com sucesso`, 'success')
+      mostrarSnackbar(`Ditado "${ditado.ditadoTitulo}" removido da turma com sucesso`, 'success')
     } catch (erro) {
       console.error('Erro ao remover ditado:', erro)
       mostrarSnackbar('Erro ao remover ditado', 'error')
