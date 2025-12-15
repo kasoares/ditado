@@ -91,12 +91,13 @@
               <template v-slot:activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  icon="mdi-plus"
                   size="small"
                   variant="text"
-                  color="success"
+                  color="info"
                   @click="irParaGerenciarAlunos(item)"
-                />
+                >
+                  <v-icon size="20">mdi-account-cog</v-icon>
+                </v-btn>
               </template>
             </v-tooltip>
             <v-tooltip text="Visualizar detalhes" location="top">
@@ -522,7 +523,7 @@ const headers = [
   { title: 'Série', key: 'serie', align: 'center' },
   { title: 'Alunos', key: 'totalAlunos', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', sortable: false }
+  { title: 'Ações', key: 'acoes', sortable: false, align: 'center' }
 ]
 
 const regras = {
@@ -532,10 +533,9 @@ const regras = {
 onMounted(async () => {
   await Promise.all([
     carregarTurmas(),
-    carregarDitadosDisponiveis(),
-    carregarCategorias()
+    carregarCategorias(),
+    carregarTodosAlunos()
   ])
-  await carregarTodosAlunos()
 })
 
 async function carregarTurmas() {
@@ -795,10 +795,17 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 async function carregarTodosAlunos() {
   try {
     const alunos = await usuarioService.listarTodos()
-    // Filtrar apenas alunos (usuários com tipo 'Aluno')
-    alunosDisponiveis.value = alunos.filter(u => u.tipoUsuario === 'Aluno') || []
+    // Filtrar apenas alunos - tenta vários campos possíveis
+    todosOsAlunos.value = alunos.filter(u => 
+      u.tipoUsuario === 'Aluno' || 
+      u.tipo === 'Aluno' ||
+      u.tipoUsuario === 2 ||
+      u.tipo === 2
+    ) || []
+    alunosDisponiveis.value = [...todosOsAlunos.value]
   } catch (erro) {
     console.error('Erro ao carregar alunos:', erro)
+    todosOsAlunos.value = []
     alunosDisponiveis.value = []
   }
 }
@@ -813,7 +820,9 @@ function irParaInsertAluno() {
 
 function abrirDialogAdicionarAlunos() {
   alunosSelecionados.value = []
-  alunosDisponiveis.value = alunosDisponiveis.value
+  // Filtra apenas alunos que NÃO estão na turma
+  const alunosIdsNaTurma = turmaSelecionada.value?.alunos?.map(a => a.id) || []
+  alunosDisponiveis.value = todosOsAlunos.value.filter(a => !alunosIdsNaTurma.includes(a.id))
   dialogAdicionarAlunos.value = true
 }
 
@@ -830,14 +839,23 @@ async function confirmarAdicionarAlunos() {
 
   adicionandoAlunos.value = true
   try {
-    // Combinar alunos já adicionados com os novos
+    // Combinar alunos já adicionados com os novos, evitando duplicações
     const alunosIdsAtuais = turmaSelecionada.value.alunos?.map(a => a.id) || []
     const todosAlunosIds = [...new Set([...alunosIdsAtuais, ...alunosSelecionados.value])]
+    
+    // Verifica quantos alunos novos foram realmente adicionados
+    const novosAlunos = alunosSelecionados.value.filter(id => !alunosIdsAtuais.includes(id))
     
     await turmaService.atualizar(turmaSelecionada.value.id, { 
       alunosIds: todosAlunosIds 
     })
-    mostrarSnackbar(`${alunosSelecionados.value.length} aluno(s) adicionado(s) com sucesso!`, 'success')
+    
+    if (novosAlunos.length > 0) {
+      mostrarSnackbar(`${novosAlunos.length} aluno(s) adicionado(s) com sucesso!`, 'success')
+    } else {
+      mostrarSnackbar('Os alunos selecionados já estavam na turma', 'info')
+    }
+    
     fecharDialogAdicionarAlunos()
     await carregarDetalhesTurma(turmaSelecionada.value.id)
   } catch (erro) {
