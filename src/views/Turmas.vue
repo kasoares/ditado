@@ -296,160 +296,55 @@
 
           <v-divider class="my-6"></v-divider>
 
-          <!-- Abas -->
-          <v-tabs v-model="abaSelecionada" color="primary">
-            <v-tab value="alunos">
-              <v-icon start>mdi-account-multiple</v-icon>
-              Alunos ({{ turmaSelecionada?.totalAlunos || 0 }})
-            </v-tab>
-            <v-tab value="ditados">
-              <v-icon start>mdi-file-document</v-icon>
-              Ditados
-            </v-tab>
-          </v-tabs>
+          <!-- Título da seção de alunos -->
+          <div class="d-flex align-center mb-4">
+            <v-icon class="mr-2" color="primary">mdi-account-multiple</v-icon>
+            <span class="text-subtitle-1 font-weight-bold">Alunos ({{ turmaSelecionada?.totalAlunos || 0 }})</span>
+          </div>
 
-          <!-- Conteúdo das Abas -->
-          <v-window v-model="abaSelecionada" class="mt-4">
-            <!-- Aba Alunos -->
-            <v-window-item value="alunos">
-              <div class="mb-4">
-                <v-btn
-                  color="success"
-                  prepend-icon="mdi-plus"
-                  size="small"
-                  @click="irParaInsertAluno"
-                >
-                  Inserir Aluno
-                </v-btn>
-              </div>
-              <div v-if="membros.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="membro in membros"
-                    :key="membro.id"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-avatar color="primary">
-                        {{ obterIniciaisMembro(membro) }}
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>{{ membro.nome }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ membro.email }}</v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-delete"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="removerMembro(membro)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-account-multiple-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhum aluno na turma</p>
-              </div>
-            </v-window-item>
-
-            <!-- Aba Ditados -->
-            <v-window-item value="ditados">
-              <div v-if="ditadosTurma.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="ditado in ditadosTurma"
-                    :key="ditado.id"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon color="primary">mdi-file-document</v-icon>
-                    </template>
-                    <v-list-item-title>{{ ditado.titulo }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      <div>
-                        {{ calcularPalavrasOmitidas(ditado) }} palavras
-                      </div>
-                      <div v-if="ditado.categorias && ditado.categorias.length > 0" class="d-flex gap-1 flex-wrap mt-1">
-                        <v-chip
-                          v-for="categoria in ditado.categorias"
-                          :key="categoria.id"
-                          size="x-small"
-                          variant="outlined"
-                          color="secondary"
-                        >
-                          {{ categoria.nome }}
-                        </v-chip>
-                      </div>
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-delete"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="removerDitado(ditado)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-file-document-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhum ditado adicionado à turma</p>
-              </div>
-            </v-window-item>
-
-            <!-- Aba Solicitações -->
-            <v-window-item value="solicitacoes">
-              <div v-if="solicitacoesPendentes.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="solicitacao in solicitacoesPendentes"
-                    :key="solicitacao.id"
-                    class="mb-2"
-                  >
-                    <template v-slot:prepend>
-                      <v-avatar color="warning">
-                        {{ obterIniciaisMembro(solicitacao.usuario) }}
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>{{ solicitacao.usuario?.nome }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Solicitado em {{ formatarData(solicitacao.dataSolicitacao) }}
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-btn
-                        icon="mdi-check"
-                        size="small"
-                        variant="text"
-                        color="success"
-                        @click="aprovarSolicitacao(solicitacao)"
-                      />
-                      <v-btn
-                        icon="mdi-close"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="rejeitarSolicitacao(solicitacao)"
-                      />
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </div>
-              <div v-else class="text-center py-6">
-                <v-icon size="48" color="grey-lighten-1" class="mb-2">
-                  mdi-bell-outline
-                </v-icon>
-                <p class="text-grey-darken-1">Nenhuma solicitação pendente</p>
-              </div>
-            </v-window-item>
-          </v-window>
+          <!-- Lista de Alunos -->
+          <div class="mb-4">
+            <v-btn
+              color="success"
+              prepend-icon="mdi-plus"
+              size="small"
+              @click="irParaInsertAluno"
+            >
+              Inserir Aluno
+            </v-btn>
+          </div>
+          <div v-if="membros.length > 0">
+            <v-list>
+              <v-list-item
+                v-for="membro in membros"
+                :key="membro.id"
+                class="mb-2"
+              >
+                <template v-slot:prepend>
+                  <v-avatar color="primary">
+                    {{ obterIniciaisMembro(membro) }}
+                  </v-avatar>
+                </template>
+                <v-list-item-title>{{ membro.nome }}</v-list-item-title>
+                <v-list-item-subtitle>{{ membro.email }}</v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-btn
+                    icon="mdi-delete"
+                    size="small"
+                    variant="text"
+                    color="error"
+                    @click="removerMembro(membro)"
+                  />
+                </template>
+              </v-list-item>
+            </v-list>
+          </div>
+          <div v-else class="text-center py-6">
+            <v-icon size="48" color="grey-lighten-1" class="mb-2">
+              mdi-account-multiple-outline
+            </v-icon>
+            <p class="text-grey-darken-1">Nenhum aluno na turma</p>
+          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
