@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Header -->
     <v-card class="mb-6" elevation="1">
       <v-card-text class="pa-6">
         <h1 class="text-h4 font-weight-bold mb-2">
@@ -12,7 +11,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Ações principais -->
     <v-row class="mb-6">
       <v-col cols="12" md="4">
         <v-card elevation="1" class="h-100 action-card" hover @click="irParaCadastroTextos">
@@ -85,7 +83,6 @@
       </v-col>
     </v-row>
 
-    <!-- Solicitações Pendentes (se houver) -->
     <v-card v-if="temSolicitacoesPendentes" class="mb-6 elevation-1 border-error">
       <v-card-title class="bg-error text-white pa-4 d-flex align-center">
         <v-icon class="mr-2">mdi-bell-ring</v-icon>
@@ -148,7 +145,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Ditados passados -->
     <v-card elevation="1">
       <v-card-title class="pa-6 d-flex align-center border-b">
         <v-icon class="mr-3" color="grey-darken-2">mdi-headphones</v-icon>
@@ -187,13 +183,11 @@
           </v-col>
         </v-row>
 
-        <!-- Loading -->
         <div v-if="carregandoDitados" class="text-center py-12">
           <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
           <p class="text-grey mt-4">Carregando ditados...</p>
         </div>
 
-        <!-- Lista vazia -->
         <div v-else-if="ditadosFiltrados.length === 0" class="text-center py-12">
           <v-icon size="64" color="grey-lighten-1">mdi-folder-open-outline</v-icon>
           <p class="text-body-1 text-grey mt-4">Nenhum ditado atribuído encontrado</p>
@@ -208,7 +202,6 @@
           </v-btn>
         </div>
 
-        <!-- Lista de ditados -->
         <div v-else>
           <v-list class="bg-transparent">
             <v-list-item
@@ -216,6 +209,8 @@
               :key="ditado.ditadoId"
               class="mb-3 rounded border"
               elevation="0"
+              @click="verDetalhesDitado(ditado)"
+              style="cursor: pointer"
             >
               <template v-slot:prepend>
                 <v-avatar color="primary" size="48">
@@ -257,13 +252,6 @@
                     <v-icon start size="18">mdi-check-circle</v-icon>
                     Média {{ ditado.notaMedia }}%
                   </v-chip>
-                  <v-btn
-                    icon="mdi-open-in-new"
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    @click="verDetalhesDitado(ditado)"
-                  />
                 </div>
               </template>
             </v-list-item>
@@ -272,7 +260,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.mensagem }}
     </v-snackbar>
@@ -310,7 +297,7 @@ const series = [
   "7º ano",
   "8º ano",
   "9º ano",
-]; // Keep for now, might be used for other filters or removed if not applicable.
+];
 
 const snackbar = ref({
   show: false,
@@ -334,7 +321,6 @@ const ditadosFiltrados = computed(() => {
     resultado = resultado.filter((d) => d.turmaNome === filtroTurma.value);
   }
 
-  // Sorting: Vencidos primeiro (dataLimite ASC), depois por dataLimite ASC
   resultado.sort((a, b) => {
     if (a.vencido && !b.vencido) return -1;
     if (!a.vencido && b.vencido) return 1;
@@ -362,16 +348,14 @@ const turmasUnicas = computed(() => {
 });
 
 onMounted(() => {
-  buscarEstatisticas(); // Maybe this needs to be re-evaluated later if it relies on ditadoService.listarTodos()
+  buscarEstatisticas();
   buscarDitadosAtribuidos();
   buscarSolicitacoesPendentes();
 });
 
-// This function might be removed or adapted if 'estatisticas.value.ditados' is no longer 'all ditados'
 async function buscarEstatisticas() {
   carregandoEstatisticas.value = true;
   try {
-    // For now, keep it as is, but it might need to change to count attributed ditados.
     const dadosDitados = await ditadoService.listarMeusDitadosAtribuidos();
     estatisticas.value.ditados = dadosDitados.length;
   } catch (erro) {
@@ -396,8 +380,6 @@ async function buscarDitadosAtribuidos() {
 
 async function buscarSolicitacoesPendentes() {
   try {
-    // Nota: Solicitações de entrada em turma podem não estar disponíveis na API
-    // Esse recurso ainda precisa ser clarificado
     solicitacoesPendentes.value = [];
   } catch (erro) {
     console.error("Erro ao carregar solicitações pendentes:", erro);
@@ -406,7 +388,6 @@ async function buscarSolicitacoesPendentes() {
 
 async function aprovarSolicitacao(solicitacao) {
   try {
-    // Nota: Aprovação de solicitações de entrada em turma pode não estar na API
     mostrarSnackbar("Funcionalidade ainda não implementada", "warning");
   } catch (erro) {
     console.error("Erro ao aprovar solicitação:", erro);
@@ -416,7 +397,6 @@ async function aprovarSolicitacao(solicitacao) {
 
 async function rejeitarSolicitacao(solicitacao) {
   try {
-    // Nota: Rejeição de solicitações de entrada em turma pode não estar na API
     mostrarSnackbar("Funcionalidade ainda não implementada", "warning");
   } catch (erro) {
     console.error("Erro ao rejeitar solicitação:", erro);
