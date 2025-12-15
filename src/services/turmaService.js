@@ -156,14 +156,30 @@ export const turmaService = {
   // ATRIBUIR DITADO À TURMA
   async atribuirDitado(turmaId, ditadoId, dataLimite) {
     try {
-      const response = await api.post(`/Turmas/${turmaId}/ditados`, {
+      // Monta o payload apenas com campos válidos (camelCase conforme Swagger)
+      const payload = {
+        ditadoId: ditadoId
+      }
+      
+      // Só envia dataLimite se tiver um valor válido
+      if (dataLimite) {
+        payload.dataLimite = dataLimite
+      }
+      
+      console.log('[TurmaService] Atribuindo ditado à turma:', {
+        turmaId,
         ditadoId,
-        dataLimite
+        dataLimite,
+        payload
       })
+      
+      const response = await api.post(`/Turmas/${turmaId}/ditados`, payload)
       return response.data
     } catch (erro) {
       console.error('Erro ao atribuir ditado à turma:', erro.response?.data || erro)
-      throw erro
+      // Extrai a mensagem do backend se disponível
+      const mensagem = erro.response?.data?.mensagem || erro.response?.data?.title || erro.message
+      throw new Error(mensagem)
     }
   },
 

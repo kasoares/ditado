@@ -494,9 +494,9 @@ async function confirmarAtribuicaoTurma() {
 
   atribuindoTurma.value = true
   try {
-    // Converter data para formato ISO se foi fornecida
+    // Converter data para formato ISO se foi fornecida e não está vazia
     let dataLimite = null
-    if (dataLimiteAtribuicao.value) {
+    if (dataLimiteAtribuicao.value && dataLimiteAtribuicao.value.trim() !== '') {
       dataLimite = new Date(dataLimiteAtribuicao.value).toISOString()
     }
 
@@ -506,7 +506,9 @@ async function confirmarAtribuicaoTurma() {
     fecharDialogAtribuirTurma()
   } catch (erro) {
     console.error('Erro ao atribuir ditado à turma:', erro)
-    mostrarSnackbar('Erro ao atribuir ditado à turma', 'error')
+    // Extrai mensagem específica do erro
+    const mensagem = erro.message || 'Erro ao atribuir ditado à turma'
+    mostrarSnackbar(mensagem, 'error')
   } finally {
     atribuindoTurma.value = false
   }
