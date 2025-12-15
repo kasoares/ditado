@@ -48,13 +48,8 @@
             <span class="text-h6 font-weight-bold">Resultados dos Alunos</span>
           </v-card-title>
           <v-card-text class="pa-6">
-            <v-data-table
-              :headers="headersAlunos"
-              :items="resultados.alunos"
-              item-key="alunoId"
-              class="elevation-1"
-              no-data-text="Nenhum aluno encontrou resultados para este ditado."
-            >
+            <v-data-table :headers="headersAlunos" :items="resultados.alunos" item-key="alunoId" class="elevation-1"
+              no-data-text="Nenhum aluno encontrou resultados para este ditado.">
               <template v-slot:item.fez="{ item }">
                 <v-icon :color="item.fez ? 'success' : 'error'">
                   {{ item.fez ? 'mdi-check-circle' : 'mdi-close-circle' }}
@@ -64,20 +59,22 @@
                 {{ item.dataEntrega ? formatarData(item.dataEntrega) : '-' }}
               </template>
               <template v-slot:item.nota="{ item }">
-                <v-chip
-                  :color="obterCorNota(item.nota)"
-                  variant="flat"
-                  size="small"
-                  v-if="item.fez"
-                >
+                <v-chip :color="obterCorNota(item.nota)" variant="flat" size="small" v-if="item.fez">
                   {{ item.nota?.toFixed(1) }}%
                 </v-chip>
                 <span v-else>-</span>
               </template>
               <template v-slot:item.atrasado="{ item }">
-                <v-icon :color="item.atrasado ? 'warning' : 'success'" v-if="item.fez">
-                  {{ item.atrasado ? 'mdi-clock-alert' : 'mdi-check' }}
-                </v-icon>
+                <div v-if="item.fez">
+                  <v-icon v-if="item.atrasado" color="error" title="Entregue com atraso">
+                    mdi-clock-alert
+                  </v-icon>
+
+                  <span v-else class="text-success" style="font-weight: 500;">
+                    No prazo
+                  </span>
+                </div>
+
                 <span v-else>-</span>
               </template>
             </v-data-table>
