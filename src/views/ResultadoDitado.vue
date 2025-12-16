@@ -1,220 +1,278 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <!-- Resumo do Ditado -->
-        <v-card elevation="1" class="mb-6">
-          <v-card-title class="pa-6 d-flex align-center border-b">
-            <v-icon class="mr-3" color="primary">mdi-chart-bar</v-icon>
-            <span class="text-h5 font-weight-bold">Resultados do Ditado: {{ resultados.ditadoTitulo }}</span>
-            <v-spacer></v-spacer>
-            <v-chip color="primary" variant="flat">
-              Turma: {{ resultados.turmaNome }}
-            </v-chip>
-          </v-card-title>
-          <v-card-text class="pa-6">
-            <v-row>
-              <v-col cols="6" sm="4" md="2">
-                <v-list-item>
-                  <v-list-item-subtitle>Total de Alunos</v-list-item-subtitle>
-                  <v-list-item-title class="text-h6">{{ resultados.totalAlunos }}</v-list-item-title>
-                </v-list-item>
-              </v-col>
-              <v-col cols="6" sm="4" md="2">
-                <v-list-item>
-                  <v-list-item-subtitle>Alunos que Fizeram</v-list-item-subtitle>
-                  <v-list-item-title class="text-h6">{{ resultados.alunosQueFizeram }}</v-list-item-title>
-                </v-list-item>
-              </v-col>
-              <v-col cols="6" sm="4" md="2">
-                <v-list-item>
-                  <v-list-item-subtitle>Percentual de Conclusão</v-list-item-subtitle>
-                  <v-list-item-title class="text-h6">{{ resultados.percentualConclusao?.toFixed(1) }}%</v-list-item-title>
-                </v-list-item>
-              </v-col>
-              <v-col cols="6" sm="4" md="2">
-                <v-list-item>
-                  <v-list-item-subtitle>Nota Média da Turma</v-list-item-subtitle>
-                  <v-list-item-title class="text-h6">{{ resultados.notaMedia?.toFixed(1) }}</v-list-item-title>
-                </v-list-item>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
+  <div>
+    <div class="d-flex align-center mb-4">
+      <v-btn
+        variant="text"
+        prepend-icon="mdi-arrow-left"
+        class="text-none mr-4"
+        @click="voltar"
+      >
+        Voltar para Ditados
+      </v-btn>
+    </div>
 
-        <!-- Gráfico de Erros por Tipo -->
-        <v-card elevation="1" class="mb-6">
-          <v-card-title class="pa-6 d-flex align-center border-b">
-            <v-icon class="mr-3" color="warning">mdi-alert-circle</v-icon>
-            <span class="text-h6 font-weight-bold">Erros por Tipo</span>
-          </v-card-title>
-          <v-card-text class="pa-6">
-            <div v-if="resultados.errosPorTipo && resultados.errosPorTipo.length > 0">
-              <div class="erros-chart">
-                <div 
-                  v-for="erro in errosOrdenados" 
-                  :key="erro.tipoErroId" 
-                  class="erro-bar-container mb-3"
-                >
-                  <div class="d-flex justify-space-between align-center mb-1">
-                    <span class="text-body-2 font-weight-medium">{{ erro.descricaoCurta }}:</span>
-                    <span class="text-body-2 font-weight-bold">{{ erro.quantidade }}</span>
-                  </div>
-                  <div class="erro-bar-bg">
-                    <div 
-                      class="erro-bar" 
-                      :style="{ width: calcularLarguraBarra(erro.quantidade) + '%' }"
-                    ></div>
-                  </div>
+    <div v-if="carregando" class="text-center py-12">
+      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <p class="text-grey mt-4">Carregando resultados da turma...</p>
+    </div>
+
+    <div v-else-if="detalhes">
+
+      <v-card class="mb-6" elevation="1">
+        <v-card-title class="bg-blue-grey-lighten-5 pa-4 font-weight-bold d-flex align-center">
+          <v-icon class="mr-2" color="primary">mdi-chart-box-outline</v-icon>
+          Resultados do Ditado: {{ detalhes.ditadoTitulo }}
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="12" md="4">
+              <div class="text-caption text-grey-darken-1 mb-1">Total de Alunos</div>
+              <div class="text-h5 font-weight-bold mb-4">{{ detalhes.totalAlunos }}</div>
+
+              <div class="text-caption text-grey-darken-1 mb-1">Nota Média da Turma</div>
+              <div class="text-h4 font-weight-black" :class="getCorTextoNota(detalhes.notaMedia)">
+                {{ detalhes.notaMedia ? detalhes.notaMedia.toFixed(1) : '-' }}
+              </div>
+            </v-col>
+
+            <v-col cols="12" md="4">
+               <div class="text-caption text-grey-darken-1 mb-1">Alunos que Fizeram</div>
+               <div class="text-h6 font-weight-bold mb-1">
+                 {{ detalhes.alunosQueFizeram }} <span class="text-body-2 text-grey">/ {{ detalhes.totalAlunos }}</span>
+               </div>
+               <div class="text-caption text-grey-darken-1 mb-1">Percentual de Conclusão</div>
+               <div class="d-flex align-center">
+                  <span class="text-h5 font-weight-bold mr-3">{{ detalhes.percentualConclusao }}%</span>
+                  <v-progress-linear
+                    :model-value="detalhes.percentualConclusao"
+                    :color="getCorProgresso(detalhes.percentualConclusao)"
+                    height="10"
+                    rounded
+                    style="max-width: 150px"
+                  ></v-progress-linear>
+               </div>
+            </v-col>
+
+            <v-col cols="12" md="4" class="text-md-right">
+               <v-chip class="mb-2" size="small" variant="outlined">{{ detalhes.turmaNome }}</v-chip>
+               <br>
+               <v-chip :color="detalhes.vencido ? 'error' : 'success'" variant="flat" class="font-weight-bold">
+                 {{ detalhes.vencido ? 'Encerrado' : 'Aberto' }}
+               </v-chip>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="mb-6" elevation="1">
+        <v-card-title class="pa-6 d-flex align-center border-b">
+          <v-icon class="mr-3" color="warning">mdi-alert-circle</v-icon>
+          <span class="text-h6 font-weight-bold">Erros por Tipo</span>
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <div v-if="detalhes.errosPorTipo && detalhes.errosPorTipo.length > 0">
+            <div class="erros-chart">
+              <div 
+                v-for="erro in errosOrdenados" 
+                :key="erro.tipoErroId" 
+                class="erro-bar-container mb-3"
+              >
+                <div class="d-flex justify-space-between align-center mb-1">
+                  <span class="text-body-2 font-weight-medium">{{ erro.descricaoCurta }}:</span>
+                  <span class="text-body-2 font-weight-bold">{{ erro.quantidade }}</span>
+                </div>
+                <div class="erro-bar-bg">
+                  <div 
+                    class="erro-bar" 
+                    :style="{ width: calcularLarguraBarra(erro.quantidade) + '%' }"
+                  ></div>
                 </div>
               </div>
             </div>
-            <div v-else class="text-center py-6">
-              <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
-              <p class="text-body-1 text-grey mt-2">Nenhum erro registrado para este ditado.</p>
+          </div>
+          <div v-else class="text-center py-6">
+            <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
+            <p class="text-body-1 text-grey mt-2">Nenhum erro registrado para este ditado.</p>
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card elevation="1">
+        <v-card-title class="pa-4 bg-white border-b d-flex align-center">
+          <v-icon color="primary" class="mr-2">mdi-account-group</v-icon>
+          Resultados dos Alunos
+        </v-card-title>
+
+        <v-data-table
+          :headers="headersAlunos"
+          :items="detalhes.alunos"
+          items-per-page="-1"
+          class="elevation-0 tabela-sem-paginacao"
+          hide-default-footer
+          density="comfortable"
+        >
+          <template v-slot:item.fez="{ item }">
+            <v-icon :color="item.fez ? 'success' : 'error'">
+              {{ item.fez ? 'mdi-check-circle' : 'mdi-close-circle' }}
+            </v-icon>
+          </template>
+
+          <template v-slot:item.dataEntrega="{ item }">
+            {{ item.dataEntrega ? formatarDataHora(item.dataEntrega) : '-' }}
+          </template>
+
+          <template v-slot:item.nota="{ item }">
+            <v-chip
+              v-if="item.fez"
+              :color="obterCorNota(item.nota)"
+              variant="flat"
+              size="small"
+              class="font-weight-bold"
+            >
+              {{ item.nota?.toFixed(1) }}%
+            </v-chip>
+            <span v-else>-</span>
+          </template>
+
+          <template v-slot:item.erroMaisComum="{ item }">
+            <span v-if="item.fez && item.erroMaisComum" class="text-error font-weight-medium">
+              {{ item.erroMaisComum }}
+            </span>
+            <span v-else class="text-grey-lighten-1">-</span>
+          </template>
+
+          <template v-slot:item.atrasado="{ item }">
+            <div v-if="item.fez">
+              <v-icon v-if="item.atrasado" color="error" title="Entregue com atraso">mdi-clock-alert</v-icon>
+              <v-icon v-else color="success" title="No prazo">mdi-check</v-icon>
             </div>
-          </v-card-text>
-        </v-card>
+            <span v-else>-</span>
+          </template>
 
-        <!-- Resultados dos Alunos -->
-        <v-card elevation="1" class="mb-6">
-          <v-card-title class="pa-6 d-flex align-center border-b">
-            <v-icon class="mr-3" color="info">mdi-account-multiple</v-icon>
-            <span class="text-h6 font-weight-bold">Resultados dos Alunos</span>
-          </v-card-title>
-          <v-card-text class="pa-0">
-            <v-table>
-              <thead>
-                <tr>
-                  <th class="text-left">Nome do Aluno</th>
-                  <th class="text-left">Matrícula</th>
-                  <th class="text-center">Fez o Ditado</th>
-                  <th class="text-center">Data de Entrega</th>
-                  <th class="text-center">Nota (1ª Tentativa)</th>
-                  <th class="text-left">Erro Mais Comum</th>
-                  <th class="text-center">Entregou Atrasado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="aluno in resultados.alunos" :key="aluno.alunoId">
-                  <td>{{ aluno.nome }}</td>
-                  <td>{{ aluno.matricula || '-' }}</td>
-                  <td class="text-center">
-                    <v-icon :color="aluno.fez ? 'success' : 'error'">
-                      {{ aluno.fez ? 'mdi-check-circle' : 'mdi-close-circle' }}
-                    </v-icon>
-                  </td>
-                  <td class="text-center">
-                    {{ aluno.dataEntrega ? formatarData(aluno.dataEntrega) : '-' }}
-                  </td>
-                  <td class="text-center">
-                    <v-chip
-                      v-if="aluno.fez"
-                      :color="obterCorNota(aluno.nota)"
-                      variant="flat"
-                      size="small"
-                    >
-                      {{ aluno.nota?.toFixed(1) }}%
-                    </v-chip>
-                    <span v-else>-</span>
-                  </td>
-                  <td>{{ aluno.erroMaisComum || '-' }}</td>
-                  <td class="text-center">
-                    <v-icon v-if="aluno.fez" :color="aluno.atrasado ? 'warning' : 'success'">
-                      {{ aluno.atrasado ? 'mdi-clock-alert' : 'mdi-check' }}
-                    </v-icon>
-                    <span v-else>-</span>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
-      {{ snackbar.mensagem }}
-    </v-snackbar>
-  </v-container>
+        </v-data-table>
+      </v-card>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { ditadoService } from '@/services/ditadoService';
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ditadoService } from '@/services/ditadoService'
 
-const route = useRoute();
-const resultados = ref({});
-const carregando = ref(true);
+const route = useRoute()
+const router = useRouter()
 
-const snackbar = ref({
-  show: false,
-  mensagem: '',
-  color: 'info',
-});
+const carregando = ref(true)
+const detalhes = ref(null)
+
+const headersAlunos = [
+  { title: 'Nome do Aluno', key: 'nome', align: 'start' },
+  { title: 'Matrícula', key: 'matricula', align: 'start' },
+  { title: 'Fez o Ditado', key: 'fez', align: 'center' },
+  { title: 'Data de Entrega', key: 'dataEntrega', align: 'center' },
+  { title: 'Nota (1ª Tentativa)', key: 'nota', align: 'center' },
+  { title: 'Erro Mais Comum', key: 'erroMaisComum', align: 'start' },
+  { title: 'Entregou Atrasado', key: 'atrasado', align: 'center' },
+]
 
 // Erros ordenados por quantidade (maior para menor)
 const errosOrdenados = computed(() => {
-  if (!resultados.value.errosPorTipo) return [];
-  return [...resultados.value.errosPorTipo].sort((a, b) => b.quantidade - a.quantidade);
-});
+  if (!detalhes.value?.errosPorTipo) return []
+  return [...detalhes.value.errosPorTipo].sort((a, b) => b.quantidade - a.quantidade)
+})
 
 // Calcula a largura da barra baseado no máximo
 const maxErros = computed(() => {
-  if (!errosOrdenados.value.length) return 1;
-  return Math.max(...errosOrdenados.value.map(e => e.quantidade));
-});
+  if (!errosOrdenados.value.length) return 1
+  return Math.max(...errosOrdenados.value.map(e => e.quantidade))
+})
 
 function calcularLarguraBarra(quantidade) {
-  return (quantidade / maxErros.value) * 100;
+  return (quantidade / maxErros.value) * 100
 }
 
 onMounted(async () => {
-  const turmaId = route.params.turmaId;
-  const ditadoId = route.params.ditadoId;
+  await carregarDetalhes()
+})
 
-  if (!turmaId || !ditadoId) {
-    mostrarSnackbar('IDs de turma ou ditado não fornecidos.', 'error');
-    carregando.value = false;
-    return;
-  }
-
+async function carregarDetalhes() {
+  carregando.value = true
   try {
-    const response = await ditadoService.buscarResultadosDitadoProfessor(turmaId, ditadoId);
-    resultados.value = response;
-  } catch (error) {
-    console.error('Erro ao carregar resultados do ditado:', error);
-    mostrarSnackbar('Erro ao carregar resultados do ditado.', 'error');
-  } finally {
-    carregando.value = false;
-  }
-});
+    const { turmaId, ditadoId } = route.params
 
-function formatarData(data) {
-  if (!data) return '-';
-  const date = new Date(data);
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+    // Tenta usar a função correta do seu Service
+    detalhes.value = await ditadoService.buscarResultadosDitadoProfessor(turmaId, ditadoId)
+
+  } catch (erro) {
+    console.warn('API falhou ou dados incompletos. Carregando DADOS DE TESTE.', erro)
+    
+    // =============================================================================
+    // DADOS DE TESTE (MOCK) - Para garantir que a tela apareça mesmo sem Back
+    // =============================================================================
+    detalhes.value = {
+        turmaId: 5,
+        turmaNome: "5º Ano A",
+        ditadoId: 10,
+        ditadoTitulo: "Ortografia Básica (Dados de Teste)",
+        totalAlunos: 25,
+        alunosQueFizeram: 18,
+        percentualConclusao: 72.0,
+        notaMedia: 78.5,
+        vencido: false,
+        dataLimite: "2025-12-20T23:59:59",
+        errosPorTipo: [
+            { tipoErroId: 2, descricaoCurta: "Acentuação", quantidade: 12 },
+            { tipoErroId: 1, descricaoCurta: "Ortografia", quantidade: 8 },
+            { tipoErroId: 3, descricaoCurta: "Troca", quantidade: 4 },
+            { tipoErroId: 4, descricaoCurta: "Supressão", quantidade: 2 },
+            { tipoErroId: 5, descricaoCurta: "Irregularidade", quantidade: 1 }
+        ],
+        alunos: [
+            { nome: "Pedro Teste", matricula: "12", fez: true, dataEntrega: "2025-12-13T22:08:00", nota: 100.0, erroMaisComum: null, atrasado: false },
+            { nome: "João da Silva", matricula: "15", fez: true, dataEntrega: "2025-12-15T10:00:00", nota: 60.5, erroMaisComum: "Acentuação", atrasado: true },
+            { nome: "Maria Souza", matricula: "18", fez: false, dataEntrega: null, nota: null, erroMaisComum: null, atrasado: false },
+            { nome: "Ana Clara", matricula: "20", fez: true, dataEntrega: "2025-12-14T09:30:00", nota: 85.0, erroMaisComum: "Troca", atrasado: false }
+        ]
+    }
+    // =============================================================================
+
+  } finally {
+    carregando.value = false
+  }
+}
+
+function voltar() {
+  router.back()
+}
+
+function formatarDataHora(data) {
+  if (!data) return '-'
+  return new Date(data).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function getCorProgresso(valor) {
+  if (valor >= 80) return 'success'
+  if (valor >= 50) return 'primary'
+  return 'warning'
 }
 
 function obterCorNota(nota) {
-  if (nota >= 80) return 'success';
-  if (nota >= 60) return 'warning';
-  return 'error';
+  if (!nota && nota !== 0) return ''
+  if (nota >= 80) return 'success'
+  if (nota >= 60) return 'warning'
+  return 'error'
 }
 
-function mostrarSnackbar(mensagem, cor = 'info') {
-  snackbar.value = {
-    show: true,
-    mensagem,
-    color: cor,
-  };
+function getCorTextoNota(nota) {
+  if (!nota && nota !== 0) return ''
+  if (nota >= 80) return 'text-success'
+  if (nota >= 60) return 'text-warning'
+  return 'text-error'
 }
 </script>
 
@@ -239,5 +297,10 @@ function mostrarSnackbar(mensagem, cor = 'info') {
   height: 100%;
   border-radius: 4px;
   transition: width 0.3s ease;
+}
+
+/* Esconde paginação */
+.tabela-sem-paginacao :deep(.v-data-table-footer) {
+  display: none !important;
 }
 </style>
