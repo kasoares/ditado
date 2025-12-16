@@ -440,11 +440,10 @@ async function submeterRespostas() {
     
     mostrarSnackbar('Respostas submetidas com sucesso!', 'success')
     
-    // Passar o resultado completo via state
+    // Navegar para a tela de resultado do aluno passando os dados via state
     setTimeout(() => {
       router.push({
-        name: 'ResultadoDitado',
-        params: { id: 'resultado' },
+        path: '/resultado-aluno',
         state: { resultado }
       })
     }, 1500)

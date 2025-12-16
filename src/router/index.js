@@ -85,10 +85,11 @@ const routes = [
         meta: { requerTipo: 'Aluno' }
       },
       {
-        path: '/resultado-ditado/:id',
-        name: 'ResultadoDitado',
-        component: () => import('@/views/ResultadoDitado.vue'),
-        meta: { requerTipo: 'Aluno' }
+        path: '/resultado-aluno',
+        name: 'ResultadoAluno',
+        component: () => import('@/views/ResultadoAluno.vue'),
+        meta: { requerTipo: 'Aluno' },
+        props: route => ({ resultado: route.params.resultado })
       },
       {
         path: '/perfil',

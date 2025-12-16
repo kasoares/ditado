@@ -530,7 +530,13 @@ async function salvarDitado() {
     if (audioGravado.value) {
       const base64Audio = audioGravado.value.split(',')[1]
       dados.audioBase64 = base64Audio
+      console.log('Tamanho do áudio em base64:', base64Audio.length, 'caracteres')
     }
+
+    console.log('Dados a serem enviados:', {
+      ...dados,
+      audioBase64: dados.audioBase64 ? `[${dados.audioBase64.length} caracteres]` : 'não definido'
+    })
 
     await ditadoService.criar(dados)
     mostrarSnackbar('Ditado cadastrado com sucesso!', 'success')
@@ -539,14 +545,18 @@ async function salvarDitado() {
       router.push('/ditados')
     }, 1500)
   } catch (erro) {
-    console.error('Erro ao salvar ditado:', erro.response?.data || erro)
+    console.error('Erro ao salvar ditado:', erro)
     
     if (erro.response?.data?.errors) {
       const erros = erro.response.data.errors
       const mensagensErro = Object.values(erros).flat().join(', ')
       erroForm.value = mensagensErro
+    } else if (erro.response?.data?.message || erro.response?.data?.title) {
+      erroForm.value = erro.response?.data?.message || erro.response?.data?.title
+    } else if (erro.message) {
+      erroForm.value = `Erro de rede: ${erro.message}. Verifique sua conexão com a internet.`
     } else {
-      erroForm.value = erro.response?.data?.message || erro.response?.data?.title || 'Erro ao salvar ditado'
+      erroForm.value = 'Erro desconhecido ao salvar ditado'
     }
     
     mostrarSnackbar('Erro ao salvar ditado', 'error')
