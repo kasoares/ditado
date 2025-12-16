@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import ResultadoAluno from '@/views/ResultadoAluno.vue'
 
 const routes = [
   {
@@ -89,8 +88,7 @@ const routes = [
         path: '/resultado-aluno',
         name: 'ResultadoAluno',
         component: () => import('@/views/ResultadoAluno.vue'),
-        meta: { requerTipo: 'Aluno' },
-        props: route => ({ resultado: route.params.resultado })
+        meta: { requerTipo: 'Aluno' }
       },
       {
         path: '/perfil',
@@ -126,12 +124,6 @@ const routes = [
         name: 'ResultadosDitadoProfessor',
         component: () => import('@/views/ResultadoDitado.vue'),
         meta: { requerTipo: ['Professor', 'Administrador'] }
-      },
-      {
-        path: '/resultado-aluno/:id', // :id aqui é o ID da RESPOSTA (tentativa)
-        name: 'ResultadoAluno',
-        component: ResultadoAluno,
-        meta: { requiresAuth: true } // Se usar autenticação
       }
     ]
   }
