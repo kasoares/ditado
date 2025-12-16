@@ -129,53 +129,77 @@
           <v-row v-else>
             <v-col
               v-for="ditado in ditadosTurma"
-              :key="ditado.id"
+              :key="ditado.ditadoId || ditado.id"
               cols="12"
               md="6"
             >
-              <v-card elevation="0" class="border h-100" @click="iniciarDitado(ditado)">
-                <v-card-text class="pa-4">
-                  <h4 class="text-h6 font-weight-bold mb-2">
-                    {{ ditado.titulo }}
-                  </h4>
-                  <p class="text-body-2 text-grey-darken-1 mb-2">
-                    {{ ditado.descricao || 'Sem descrição' }}
-                  </p>
-                  <!-- Categorias -->
-                  <div v-if="ditado.categoriaIds && ditado.categoriaIds.length > 0" class="d-flex gap-1 flex-wrap mb-3">
-                    <v-chip
-                      v-for="catId in ditado.categoriaIds"
-                      :key="catId"
-                      size="x-small"
-                      variant="outlined"
-                      color="secondary"
-                    >
-                      {{ getNomeCategoria(catId) }}
-                    </v-chip>
+              <v-card elevation="2" class="ditado-card h-100 d-flex flex-column" hover>
+                <v-card-text class="pa-6 flex-grow-1">
+                  <div class="d-flex align-start mb-4">
+                    <v-avatar color="primary" size="56" class="mr-4">
+                      <v-icon size="32" color="white">mdi-headphones</v-icon>
+                    </v-avatar>
+                    
+                    <div class="flex-grow-1">
+                      <h3 class="text-h6 font-weight-bold mb-1">{{ ditado.titulo }}</h3>
+                      
+                      <p class="text-body-2 text-grey-darken-1 mb-2">
+                        {{ ditado.descricao || 'Sem descrição' }}
+                      </p>
+
+                      <!-- Categorias -->
+                      <div v-if="ditado.categoriasNomes && ditado.categoriasNomes.length > 0" class="d-flex gap-1 flex-wrap mb-2">
+                        <v-chip
+                          v-for="catNome in ditado.categoriasNomes"
+                          :key="catNome"
+                          size="x-small"
+                          variant="outlined"
+                          color="secondary"
+                        >
+                          {{ catNome }}
+                        </v-chip>
+                      </div>
+                    </div>
                   </div>
+
                   <v-divider class="my-3"></v-divider>
-                  <div class="d-flex align-center gap-2 mb-2">
-                    <v-icon size="small" color="info">mdi-format-text</v-icon>
-                    <span class="text-caption text-grey-darken-1">
-                      {{ ditado.palavrasOmitidas }} palavras
+
+                  <!-- Informações do ditado -->
+                  <v-row dense class="text-caption mb-3">
+                    <v-col cols="6">
+                      <div class="d-flex align-center text-grey-darken-1 mb-1">
+                        <v-icon size="14" class="mr-1">mdi-format-text</v-icon>
+                        {{ ditado.palavrasOmitidas || 0 }} palavras
+                      </div>
+                    </v-col>
+                    
+                    <v-col cols="6" class="text-right">
+                      <div v-if="ditado.dataLimite" :class="isAtrasado(ditado.dataLimite) ? 'text-error' : 'text-grey-darken-1'">
+                        <v-icon size="14" class="mr-1">mdi-calendar-clock</v-icon>
+                        {{ formatarData(ditado.dataLimite) }}
+                      </div>
+                    </v-col>
+                  </v-row>
+
+                  <!-- Status de Tentativa -->
+                  <div v-if="ditado.status?.jaTentou" class="bg-grey-lighten-4 pa-2 rounded text-center">
+                    <span class="text-caption text-grey-darken-2">Melhor Nota: </span>
+                    <span class="font-weight-bold" :class="getCorNota(ditado.status.melhorNota)">
+                      {{ ditado.status.melhorNota.toFixed(1) }}%
                     </span>
                   </div>
-                  <div class="d-flex align-center gap-2">
-                    <v-icon size="small" color="success">mdi-music</v-icon>
-                    <span class="text-caption text-grey-darken-1">
-                      Com áudio
-                    </span>
-                  </div>
+
                 </v-card-text>
-                <v-card-actions class="pa-4 bg-grey-lighten-5">
+                
+                <v-card-actions class="pa-4 pt-0">
                   <v-btn
-                    color="primary"
+                    block
+                    :color="ditado.status?.jaTentou ? 'secondary' : 'primary'"
                     variant="flat"
-                    width="100%"
-                    class="text-none"
-                    @click.stop="iniciarDitado(ditado)"
+                    prepend-icon="mdi-play"
+                    @click="iniciarDitado(ditado)"
                   >
-                    Fazer Ditado
+                    {{ ditado.status?.jaTentou ? 'Tentar Novamente' : 'Iniciar Ditado' }}
                   </v-btn>
                 </v-card-actions>
               </v-card>
@@ -197,7 +221,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { turmaService } from '@/services/turmaService'
-import { ditadoService } from '@/services/ditadoService'
+import { alunoService } from '@/services/alunoService'
 import { categoriaService } from '@/services/categoriaService'
 
 const router = useRouter()
@@ -282,8 +306,9 @@ async function carregarSolicitacoesPendentes() {
 async function abrirDitadosTurma(turma) {
   turmaSelecionada.value = turma
   try {
-    // Carregar apenas os ditados atribuídos à turma específica
-    ditadosTurma.value = await turmaService.listarDitados(turma.id)
+    // Carregar ditados atribuídos à turma do aluno usando o serviço correto
+    ditadosTurma.value = await alunoService.listarDitadosDaTurma(turma.id)
+    console.log(`Ditados carregados para turma ${turma.nome}:`, ditadosTurma.value)
   } catch (erro) {
     console.error('Erro ao carregar ditados da turma:', erro)
     mostrarSnackbar('Erro ao carregar ditados', 'error')
@@ -296,17 +321,23 @@ function selecionarTurma(turma) {
 }
 
 function iniciarDitado(ditado) {
-  router.push(`/realizar-ditado/${ditado.id}`)
+  // A API retorna ditadoId ao invés de id
+  const id = ditado.ditadoId || ditado.id
+  router.push(`/realizar-ditado/${id}`)
 }
 
 function formatarData(data) {
+  if (!data) return '--/--/----'
   return new Date(data).toLocaleDateString('pt-BR', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: '2-digit'
   })
+}
+
+function isAtrasado(dataLimite) {
+  if (!dataLimite) return false
+  return new Date(dataLimite) < new Date()
 }
 
 function mostrarSnackbar(mensagem, cor = 'success') {
@@ -317,9 +348,10 @@ function mostrarSnackbar(mensagem, cor = 'success') {
   }
 }
 
-function getNomeCategoria(categoriaId) {
-  const categoria = categorias.value.find(c => c.id === categoriaId)
-  return categoria ? categoria.nome : 'Desconhecida'
+function getCorNota(nota) {
+  if (nota >= 70) return 'text-success'
+  if (nota >= 50) return 'text-warning'
+  return 'text-error'
 }
 </script>
 
@@ -335,5 +367,14 @@ function getNomeCategoria(categoriaId) {
 
 .border:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ditado-card {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.ditado-card:hover {
+  transform: translateY(-4px);
 }
 </style>
