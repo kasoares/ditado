@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import ResultadoAluno from '@/views/ResultadoAluno.vue'
 
 const routes = [
   {
@@ -120,11 +121,17 @@ const routes = [
         component: () => import('@/views/Usuarios.vue'),
         meta: { requerTipo: ['Professor', 'Administrador'] }
       },
-            {
+      {
         path: '/turmas/:turmaId/ditados/:ditadoId/resultados',
         name: 'ResultadosDitadoProfessor',
         component: () => import('@/views/ResultadoDitado.vue'),
         meta: { requerTipo: ['Professor', 'Administrador'] }
+      },
+      {
+        path: '/resultado-aluno/:id', // :id aqui é o ID da RESPOSTA (tentativa)
+        name: 'ResultadoAluno',
+        component: ResultadoAluno,
+        meta: { requiresAuth: true } // Se usar autenticação
       }
     ]
   }
@@ -137,7 +144,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  
+
   if (to.meta.requerAutenticacao && !authStore.estaAutenticado) {
     next('/login')
   } else if (to.path === '/login' && authStore.estaAutenticado) {
@@ -153,10 +160,10 @@ router.beforeEach((to, from, next) => {
     }
   } else if (to.meta.requerTipo) {
     // Verificar se o usuário tem permissão para acessar a rota
-    const tiposPermitidos = Array.isArray(to.meta.requerTipo) 
-      ? to.meta.requerTipo 
+    const tiposPermitidos = Array.isArray(to.meta.requerTipo)
+      ? to.meta.requerTipo
       : [to.meta.requerTipo]
-    
+
     if (!tiposPermitidos.includes(authStore.tipoUsuario)) {
       // Usuário não tem permissão, redireciona para o painel correto
       if (authStore.ehAdministrador) {

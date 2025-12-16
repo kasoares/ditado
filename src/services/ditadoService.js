@@ -10,6 +10,16 @@ export const ditadoService = {
       throw erro
     }
   },
+  async listarMinhasTentativas(ditadoId) {
+    try {
+      // Rota confirmada no seu Swagger
+      const response = await api.get(`/Alunos/ditados/${ditadoId}/minhas-tentativas`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao listar tentativas:', erro.response?.data || erro)
+      throw erro
+    }
+  },
 
   // Adicione isso no ditadoService.js
   async obterDetalhesAtribuicao(turmaId, ditadoId) {

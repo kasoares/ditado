@@ -7,18 +7,12 @@
           <v-icon size="24" class="mr-2">mdi-headphones</v-icon>
           <span class="text-h6 font-weight-bold">Sessão de Ditado • Aluno</span>
         </div>
-        
+
         <div class="d-flex align-center gap-4">
           <v-btn variant="text" class="text-none">Perfis</v-btn>
           <v-btn variant="text" class="text-none">Sessões</v-btn>
           <v-btn variant="text" class="text-none">Resultados</v-btn>
-          <v-btn
-            variant="text"
-            prepend-icon="mdi-exit-to-app"
-            color="error"
-            class="text-none"
-            @click="sairDitado"
-          >
+          <v-btn variant="text" prepend-icon="mdi-exit-to-app" color="error" class="text-none" @click="sairDitado">
             Sair
           </v-btn>
         </div>
@@ -69,39 +63,18 @@
               <v-icon size="32" color="primary" class="mr-3">mdi-volume-high</v-icon>
               <span class="text-h6 font-weight-bold">Ouça o ditado atual</span>
             </div>
-            
+
             <!-- Player de áudio com controles completos -->
             <div class="audio-player-container">
               <div class="d-flex align-center gap-3 mb-3">
-                <v-btn
-                  :color="!audioTocando ? 'primary' : 'grey'"
-                  :variant="!audioTocando ? 'flat' : 'outlined'"
-                  icon="mdi-play"
-                  size="large"
-                  @click="tocarAudio"
-                  :disabled="!audioBase64 || audioTocando"
-                />
-                <v-btn
-                  color="warning"
-                  variant="flat"
-                  icon="mdi-pause"
-                  size="large"
-                  @click="pausarAudio"
-                  :disabled="!audioBase64 || !audioTocando"
-                />
-             
+                <v-btn :color="!audioTocando ? 'primary' : 'grey'" :variant="!audioTocando ? 'flat' : 'outlined'"
+                  icon="mdi-play" size="large" @click="tocarAudio" :disabled="!audioBase64 || audioTocando" />
+                <v-btn color="warning" variant="flat" icon="mdi-pause" size="large" @click="pausarAudio"
+                  :disabled="!audioBase64 || !audioTocando" />
+
                 <div class="flex-grow-1">
-                  <v-slider
-                    v-model="progressoAudio"
-                    :max="100"
-                    :step="0.1"
-                    color="primary"
-                    track-color="grey-lighten-2"
-                    thumb-label
-                    hide-details
-                    @update:model-value="buscarPosicaoAudio"
-                    :disabled="!audioBase64"
-                  >
+                  <v-slider v-model="progressoAudio" :max="100" :step="0.1" color="primary" track-color="grey-lighten-2"
+                    thumb-label hide-details @update:model-value="buscarPosicaoAudio" :disabled="!audioBase64">
                     <template v-slot:thumb-label="{ modelValue }">
                       {{ formatarTempo((modelValue / 100) * duracaoTotal) }}
                     </template>
@@ -126,28 +99,17 @@
               <span v-if="segmento.segmentoId === null || segmento.segmentoId === undefined" class="texto-fixo">
                 {{ segmento.conteudo }}
               </span>
-              
+
               <!-- Lacuna para preenchimento (segmentos com segmentoId) -->
               <span v-else class="lacuna-container">
-                <input
-                  v-model="respostas[segmento.segmentoId]"
-                  type="text"
-                  class="lacuna-input"
-                  :placeholder="numeroDasLacunas[segmento.segmentoId]"
-                  @input="verificarPreenchimento"
-                />
+                <input v-model="respostas[segmento.segmentoId]" type="text" class="lacuna-input"
+                  :placeholder="numeroDasLacunas[segmento.segmentoId]" @input="verificarPreenchimento" />
               </span>
             </template>
           </div>
 
           <!-- Info de preenchimento -->
-          <v-alert
-            v-if="!todasPreenchidas"
-            type="info"
-            variant="tonal"
-            density="compact"
-            class="mt-6"
-          >
+          <v-alert v-if="!todasPreenchidas" type="info" variant="tonal" density="compact" class="mt-6">
             Você pode ouvir quantas vezes precisar.
           </v-alert>
         </v-card-text>
@@ -156,25 +118,11 @@
       <!-- Ações -->
       <v-card elevation="1" class="mb-6">
         <v-card-actions class="pa-6 justify-space-between">
-          <v-btn
-            color="grey"
-            variant="outlined"
-            prepend-icon="mdi-eraser"
-            class="text-none"
-            @click="limparCampos"
-          >
+          <v-btn color="grey" variant="outlined" prepend-icon="mdi-eraser" class="text-none" @click="limparCampos">
             Limpar campos
           </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            size="large"
-            prepend-icon="mdi-send"
-            class="text-none px-8"
-            :disabled="!todasPreenchidas"
-            :loading="submetendo"
-            @click="submeterRespostas"
-          >
+          <v-btn color="primary" variant="flat" size="large" prepend-icon="mdi-send" class="text-none px-8"
+            :disabled="!todasPreenchidas" :loading="submetendo" @click="submeterRespostas">
             Submeter respostas
           </v-btn>
         </v-card-actions>
@@ -266,7 +214,7 @@ const snackbar = ref({
 const todasPreenchidas = computed(() => {
   const lacunas = segmentos.value.filter(s => s.segmentoId !== null && s.segmentoId !== undefined)
   if (lacunas.length === 0) return false
-  
+
   return lacunas.every(lacuna => {
     const resposta = respostas.value[lacuna.segmentoId]
     return resposta && resposta.trim() !== ''
@@ -287,7 +235,7 @@ const numeroDasLacunas = computed(() => {
 
 onMounted(() => {
   carregarDitado()
-  
+
   // Event listeners para o player de áudio
   if (audioPlayer.value) {
     audioPlayer.value.addEventListener('timeupdate', atualizarProgressoAudio)
@@ -317,10 +265,10 @@ async function carregarDitado() {
   try {
     const id = route.params.id
     const dados = await ditadoService.buscarParaRealizar(id)
-    
+
     ditado.value = dados
     segmentos.value = dados.segmentos || []
-    
+
     // Converter base64 para data URL se necessário
     if (dados.audioBase64) {
       // Verificar se já tem o prefixo data:
@@ -331,7 +279,7 @@ async function carregarDitado() {
         audioBase64.value = `data:audio/mpeg;base64,${dados.audioBase64}`
       }
     }
-    
+
     // Inicializar respostas apenas para segmentos com segmentoId
     segmentos.value
       .filter(s => s.segmentoId !== null && s.segmentoId !== undefined)
@@ -393,8 +341,8 @@ function atualizarProgressoAudio() {
   if (audioPlayer.value) {
     tempoAtual.value = audioPlayer.value.currentTime
     duracaoTotal.value = audioPlayer.value.duration || 0
-    progressoAudio.value = duracaoTotal.value > 0 
-      ? (tempoAtual.value / duracaoTotal.value) * 100 
+    progressoAudio.value = duracaoTotal.value > 0
+      ? (tempoAtual.value / duracaoTotal.value) * 100
       : 0
   }
 }
@@ -421,23 +369,29 @@ function limparCampos() {
 }
 
 async function submeterRespostas() {
+  // 1. Validação básica (mantida do seu código)
   if (!todasPreenchidas.value) {
     mostrarSnackbar('Por favor, preencha todas as lacunas', 'warning')
     return
   }
 
   submetendo.value = true
+
   try {
     const id = route.params.id
-    
-    // Preparar respostas no formato esperado pela API
-    const respostasArray = Object.entries(respostas.value).map(([segmentoId, resposta]) => ({
+
+    // 2. CORREÇÃO DO FORMATO: 
+    // Usamos 'textoDigitado' (padrão mais comum) em vez de 'resposta'.
+    // E parseamos o ID para garantir que é número.
+    const respostasArray = Object.entries(respostas.value).map(([segmentoId, valor]) => ({
       segmentoId: parseInt(segmentoId),
-      resposta: resposta.trim()
+      resposta: valor.trim() // <--- NOME CORRETO
     }))
 
+    // 3. ENVIO:
+    // O backend DEVE retornar o objeto da tentativa criada (incluindo o ID dela)
     const resultado = await ditadoService.submeterResposta(id, respostasArray)
-    
+
     mostrarSnackbar('Respostas submetidas com sucesso!', 'success')
     
     // Navegar para a tela de resultado do aluno passando os dados via state
@@ -448,14 +402,14 @@ async function submeterRespostas() {
       })
     }, 1500)
   } catch (erro) {
-    console.error('Erro ao submeter respostas:', erro)
-    
+    console.error('Erro ao submeter:', erro)
+
     if (erro.response?.data?.errors) {
       const erros = erro.response.data.errors
-      const mensagensErro = Object.values(erros).flat().join(', ')
-      mostrarSnackbar(mensagensErro, 'error')
+      const msg = Object.values(erros).flat().join(', ')
+      mostrarSnackbar(msg, 'error')
     } else {
-      mostrarSnackbar('Erro ao submeter respostas', 'error')
+      mostrarSnackbar('Erro ao processar respostas. Tente novamente.', 'error')
     }
   } finally {
     submetendo.value = false
