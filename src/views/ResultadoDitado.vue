@@ -65,38 +65,81 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="mb-6" elevation="1">
-        <v-card-title class="pa-6 d-flex align-center border-b">
-          <v-icon class="mr-3" color="warning">mdi-alert-circle</v-icon>
-          <span class="text-h6 font-weight-bold">Erros por Tipo</span>
-        </v-card-title>
-        <v-card-text class="pa-6">
-          <div v-if="detalhes.errosPorTipo && detalhes.errosPorTipo.length > 0">
-            <div class="erros-chart">
-              <div 
-                v-for="erro in errosOrdenados" 
-                :key="erro.tipoErroId" 
-                class="erro-bar-container mb-3"
-              >
-                <div class="d-flex justify-space-between align-center mb-1">
-                  <span class="text-body-2 font-weight-medium">{{ erro.descricaoCurta }}:</span>
-                  <span class="text-body-2 font-weight-bold">{{ erro.quantidade }}</span>
-                </div>
-                <div class="erro-bar-bg">
+      <v-row class="mb-6">
+        <!-- Gráfico Erros por Tipo -->
+        <v-col cols="12" md="6">
+          <v-card elevation="1" class="h-100">
+            <v-card-title class="pa-6 d-flex align-center border-b">
+              <v-icon class="mr-3" color="warning">mdi-alert-circle</v-icon>
+              <span class="text-h6 font-weight-bold">Erros por Tipo</span>
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <div v-if="detalhes.errosPorTipo && detalhes.errosPorTipo.length > 0">
+                <div class="erros-chart">
                   <div 
-                    class="erro-bar" 
-                    :style="{ width: calcularLarguraBarra(erro.quantidade) + '%' }"
-                  ></div>
+                    v-for="erro in errosOrdenados" 
+                    :key="erro.tipoErroId" 
+                    class="erro-bar-container mb-3"
+                  >
+                    <div class="d-flex justify-space-between align-center mb-1">
+                      <span class="text-body-2 font-weight-medium">{{ erro.descricaoCurta }}:</span>
+                      <span class="text-body-2 font-weight-bold">{{ erro.quantidade }}</span>
+                    </div>
+                    <div class="erro-bar-bg">
+                      <div 
+                        class="erro-bar" 
+                        :style="{ width: calcularLarguraBarra(erro.quantidade) + '%' }"
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div v-else class="text-center py-6">
-            <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
-            <p class="text-body-1 text-grey mt-2">Nenhum erro registrado para este ditado.</p>
-          </div>
-        </v-card-text>
-      </v-card>
+              <div v-else class="text-center py-6">
+                <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
+                <p class="text-body-1 text-grey mt-2">Nenhum erro registrado.</p>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Gráfico Erros por Palavra -->
+        <v-col cols="12" md="6">
+          <v-card elevation="1" class="h-100">
+            <v-card-title class="pa-6 d-flex align-center border-b">
+              <v-icon class="mr-3" color="error">mdi-format-letter-case</v-icon>
+              <span class="text-h6 font-weight-bold">Erros por Palavra</span>
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <div v-if="detalhes.errosPorPalavra && detalhes.errosPorPalavra.length > 0">
+                <div class="erros-chart">
+                  <div 
+                    v-for="(palavra, index) in palavrasOrdenadas" 
+                    :key="index" 
+                    class="erro-bar-container mb-3"
+                  >
+                    <div class="d-flex justify-space-between align-center mb-1">
+                      <span class="text-body-2 font-weight-medium">{{ palavra.palavra }}:</span>
+                      <span class="text-body-2 font-weight-bold">
+                        {{ palavra.quantidadeErros }} ({{ palavra.percentualErro.toFixed(1) }}%)
+                      </span>
+                    </div>
+                    <div class="erro-bar-bg">
+                      <div 
+                        class="erro-bar-palavra" 
+                        :style="{ width: calcularLarguraBarraPalavra(palavra.quantidadeErros) + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-6">
+                <v-icon size="48" color="grey-lighten-1">mdi-check-all</v-icon>
+                <p class="text-body-1 text-grey mt-2">Nenhum erro registrado.</p>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <v-card elevation="1">
         <v-card-title class="pa-4 bg-white border-b d-flex align-center">
@@ -193,6 +236,22 @@ function calcularLarguraBarra(quantidade) {
   return (quantidade / maxErros.value) * 100
 }
 
+// Palavras ordenadas por quantidade de erros (maior para menor)
+const palavrasOrdenadas = computed(() => {
+  if (!detalhes.value?.errosPorPalavra) return []
+  return [...detalhes.value.errosPorPalavra].sort((a, b) => b.quantidadeErros - a.quantidadeErros)
+})
+
+// Calcula a largura da barra de palavras baseado no máximo
+const maxErrosPalavra = computed(() => {
+  if (!palavrasOrdenadas.value.length) return 1
+  return Math.max(...palavrasOrdenadas.value.map(p => p.quantidadeErros))
+})
+
+function calcularLarguraBarraPalavra(quantidade) {
+  return (quantidade / maxErrosPalavra.value) * 100
+}
+
 onMounted(async () => {
   await carregarDetalhes()
 })
@@ -228,6 +287,15 @@ async function carregarDetalhes() {
             { tipoErroId: 3, descricaoCurta: "Troca", quantidade: 4 },
             { tipoErroId: 4, descricaoCurta: "Supressão", quantidade: 2 },
             { tipoErroId: 5, descricaoCurta: "Irregularidade", quantidade: 1 }
+        ],
+        errosPorPalavra: [
+            { palavra: "açúcar", quantidadeErros: 15, percentualErro: 83.33 },
+            { palavra: "exceção", quantidadeErros: 12, percentualErro: 66.67 },
+            { palavra: "assessoria", quantidadeErros: 10, percentualErro: 55.56 },
+            { palavra: "tijolo", quantidadeErros: 8, percentualErro: 44.44 },
+            { palavra: "México", quantidadeErros: 6, percentualErro: 33.33 },
+            { palavra: "paralelepípedo", quantidadeErros: 5, percentualErro: 27.78 },
+            { palavra: "cabeleireiro", quantidadeErros: 3, percentualErro: 16.67 }
         ],
         alunos: [
             { nome: "Pedro Teste", matricula: "12", fez: true, dataEntrega: "2025-12-13T22:08:00", nota: 100.0, erroMaisComum: null, atrasado: false },
@@ -294,6 +362,13 @@ function getCorTextoNota(nota) {
 
 .erro-bar {
   background: linear-gradient(90deg, #7c4dff, #536dfe);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.erro-bar-palavra {
+  background: linear-gradient(90deg, #f44336, #e91e63);
   height: 100%;
   border-radius: 4px;
   transition: width 0.3s ease;
