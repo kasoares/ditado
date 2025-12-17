@@ -2,7 +2,9 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
 // Usa proxy em desenvolvimento, URL completa em produção
-const baseURL = 'http://localhost:5000/api'
+const baseURL = import.meta.env.DEV 
+  ? '/api' 
+  : 'https://api-ditado.azurewebsites.net/api'
 
 const api = axios.create({
   baseURL
