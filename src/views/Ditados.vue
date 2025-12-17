@@ -315,17 +315,7 @@
           </div>
         </v-card-text>
 
-        <v-card-actions class="pa-4 bg-grey-lighten-5">
-          <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            variant="flat"
-            prepend-icon="mdi-school"
-            @click="atribuirDoDetalhe(ditadoDetalhes)"
-          >
-            Atribuir a Turma
-          </v-btn>
-        </v-card-actions>
+        <!-- A ação de atribuir foi removida do modal de visualização -->
       </v-card>
     </v-dialog>
 
