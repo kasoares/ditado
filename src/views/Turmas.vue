@@ -91,13 +91,12 @@
               <template v-slot:activator="{ props }">
                 <v-btn
                   v-bind="props"
+                  icon="mdi-account-cog"
                   size="small"
                   variant="text"
                   color="info"
                   @click="irParaGerenciarAlunos(item)"
-                >
-                  <v-icon size="20">mdi-account-cog</v-icon>
-                </v-btn>
+                />
               </template>
             </v-tooltip>
             <v-tooltip text="Visualizar detalhes" location="top">

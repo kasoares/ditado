@@ -23,57 +23,6 @@
     </v-card>
 
     <v-card class="mb-6" elevation="1">
-      <v-card-text class="pa-6">
-        <v-row class="g-4">
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="pesquisa"
-              prepend-inner-icon="mdi-magnify"
-              placeholder="Filtrar ditados cadastrados"
-              variant="outlined"
-              density="comfortable"
-              @update:model-value="filtrarDitados"
-              clearable
-              hide-details
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="filtroCategoria"
-              :items="categorias"
-              item-title="nome"
-              item-value="id"
-              placeholder="Filtrar por categorias"
-              variant="outlined"
-              density="comfortable"
-              multiple
-              chips
-              clearable
-              @update:model-value="filtrarDitados"
-              hide-details
-            />
-          </v-col>
-        </v-row>
-        <v-row v-if="filtroCategoria.length > 0" class="mt-2">
-          <v-col cols="12">
-            <div class="d-flex gap-2 align-center flex-wrap">
-              <span class="text-caption text-grey-darken-1">Categorias selecionadas:</span>
-              <v-chip
-                v-for="catId in filtroCategoria"
-                :key="catId"
-                size="small"
-                closable
-                @click:close="removerFiltroCategoria(catId)"
-              >
-                {{ getNomeCategoriaById(catId) }}
-              </v-chip>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <v-card class="mb-6" elevation="1">
       <v-card-title class="bg-blue-grey-lighten-5 pa-4 d-flex align-center">
         <v-icon class="mr-2" color="primary">mdi-calendar-check</v-icon>
         Ditados Atribuídos (Últimos 30 dias)
@@ -164,6 +113,57 @@
       </v-data-table>
     </v-card>
 
+    <v-card class="mb-6" elevation="1">
+      <v-card-text class="pa-6">
+        <v-row class="g-4">
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="pesquisa"
+              prepend-inner-icon="mdi-magnify"
+              placeholder="Filtrar ditados cadastrados"
+              variant="outlined"
+              density="comfortable"
+              @update:model-value="filtrarDitados"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-select
+              v-model="filtroCategoria"
+              :items="categorias"
+              item-title="nome"
+              item-value="id"
+              placeholder="Filtrar por categorias"
+              variant="outlined"
+              density="comfortable"
+              multiple
+              chips
+              clearable
+              @update:model-value="filtrarDitados"
+              hide-details
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="filtroCategoria.length > 0" class="mt-2">
+          <v-col cols="12">
+            <div class="d-flex gap-2 align-center flex-wrap">
+              <span class="text-caption text-grey-darken-1">Categorias selecionadas:</span>
+              <v-chip
+                v-for="catId in filtroCategoria"
+                :key="catId"
+                size="small"
+                closable
+                @click:close="removerFiltroCategoria(catId)"
+              >
+                {{ getNomeCategoriaById(catId) }}
+              </v-chip>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
     <v-card elevation="1">
       <v-card-title class="bg-grey-lighten-5 pa-4">
         <v-icon class="mr-2">mdi-file-document-multiple</v-icon>
@@ -226,6 +226,14 @@
 
         <template v-slot:item.acoes="{ item }">
           <div class="d-flex gap-2 justify-end" @click.stop>
+            <v-btn
+              icon="mdi-eye"
+              size="small"
+              variant="text"
+              color="info"
+              title="Visualizar detalhes"
+              @click="abrirDetalhesDitado($event, { item })"
+            />
             <v-btn
               icon="mdi-school"
               size="small"

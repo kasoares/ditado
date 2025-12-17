@@ -193,9 +193,109 @@
             <span v-else>-</span>
           </template>
 
+          <template v-slot:item.acoes="{ item }">
+            <v-btn
+              icon="mdi-eye"
+              size="small"
+              variant="text"
+              color="primary"
+              :disabled="!item.fez"
+              @click="abrirDetalhesAluno(item)"
+              title="Ver respostas do aluno"
+            >
+            </v-btn>
+          </template>
+
         </v-data-table>
       </v-card>
     </div>
+
+    <!-- Modal de detalhes da resposta do aluno -->
+    <v-dialog v-model="dialogDetalhes" max-width="900" scrollable>
+      <v-card>
+        <v-card-title class="bg-blue-grey-lighten-5 d-flex align-center">
+          <v-icon class="mr-2">mdi-account-details</v-icon>
+          <span>Resposta Detalhada - {{ alunoSelecionado?.nome }}</span>
+        </v-card-title>
+
+        <v-divider></v-divider>
+
+        <v-card-text class="pa-6" style="max-height: 600px;">
+          <div v-if="carregandoDetalhes" class="text-center py-12">
+            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            <p class="text-grey mt-4">Carregando respostas...</p>
+          </div>
+
+          <div v-else-if="detalhesResposta && detalhesResposta.detalhes">
+            <div class="mb-4">
+              <div class="text-caption text-grey-darken-1">Nota Final</div>
+              <div class="text-h4 font-weight-bold" :class="getCorTextoNota(detalhesResposta.nota)">
+                {{ detalhesResposta.nota?.toFixed(1) }}%
+              </div>
+            </div>
+
+            <v-divider class="my-4"></v-divider>
+
+            <div class="text-h6 mb-3">Comparação Palavra por Palavra</div>
+
+            <v-list>
+              <v-list-item
+                v-for="(segmento, index) in detalhesResposta.detalhes"
+                :key="index"
+                class="mb-2 resposta-item"
+                :class="segmento.correto ? 'bg-success-lighten-5' : 'bg-error-lighten-5'"
+              >
+                <div class="d-flex align-center w-100 flex-wrap ga-2">
+                  <v-icon :color="getCorItemResposta(segmento.correto)" size="small">
+                    {{ segmento.correto ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                  </v-icon>
+                  
+                  <span class="font-weight-bold text-grey-darken-2" style="min-width: 30px;">{{ index + 1 }}.</span>
+                  
+                  <span class="font-weight-bold text-body-1" style="min-width: 100px;">
+                    {{ segmento.respostaEsperada.toUpperCase() }}
+                  </span>
+                  
+                  <template v-if="!segmento.correto">
+                    <v-icon size="x-small" class="mx-1">mdi-arrow-right</v-icon>
+                    <span class="text-caption text-grey-darken-1">Aluno:</span>
+                    <span class="font-weight-bold text-body-1 text-error">
+                      {{ (segmento.respostaFornecida || '(não fornecido)').toUpperCase() }}
+                    </span>
+                  </template>
+                  
+                  <template v-if="segmento.correto">
+                    <span class="text-success font-weight-medium ml-2">✓ Correto</span>
+                  </template>
+                  
+                  <v-chip 
+                    v-if="segmento.tipoErro" 
+                    size="x-small" 
+                    color="error" 
+                    variant="flat"
+                    class="ml-2"
+                  >
+                    {{ segmento.tipoErro }}
+                  </v-chip>
+                </div>
+              </v-list-item>
+            </v-list>
+          </div>
+
+          <div v-else class="text-center py-12 text-grey">
+            <v-icon size="64" color="grey-lighten-1">mdi-alert-circle-outline</v-icon>
+            <p class="mt-4">Não foi possível carregar os detalhes da resposta.</p>
+          </div>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="fecharDetalhes">Fechar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -210,6 +310,12 @@ const router = useRouter()
 const carregando = ref(true)
 const detalhes = ref(null)
 
+// Modal de detalhes do aluno
+const dialogDetalhes = ref(false)
+const alunoSelecionado = ref(null)
+const detalhesResposta = ref(null)
+const carregandoDetalhes = ref(false)
+
 const headersAlunos = [
   { title: 'Nome do Aluno', key: 'nome', align: 'start' },
   { title: 'Matrícula', key: 'matricula', align: 'start' },
@@ -218,6 +324,7 @@ const headersAlunos = [
   { title: 'Nota (1ª Tentativa)', key: 'nota', align: 'center' },
   { title: 'Erro Mais Comum', key: 'erroMaisComum', align: 'start' },
   { title: 'Entregou Atrasado', key: 'atrasado', align: 'center' },
+  { title: 'Respostas', key: 'acoes', align: 'center', sortable: false },
 ]
 
 // Erros ordenados por quantidade (maior para menor)
@@ -342,6 +449,39 @@ function getCorTextoNota(nota) {
   if (nota >= 60) return 'text-warning'
   return 'text-error'
 }
+
+async function abrirDetalhesAluno(aluno) {
+  if (!aluno.fez) return // Não abre se aluno não fez
+  
+  alunoSelecionado.value = aluno
+  dialogDetalhes.value = true
+  carregandoDetalhes.value = true
+  detalhesResposta.value = null
+  
+  try {
+    const turmaId = route.params.turmaId
+    const ditadoId = route.params.ditadoId
+    const alunoId = aluno.alunoId || aluno.id
+    
+    const response = await ditadoService.buscarResultadoAlunoDetalhado(turmaId, alunoId, ditadoId)
+    detalhesResposta.value = response
+  } catch (erro) {
+    console.error('Erro ao carregar detalhes do aluno:', erro)
+    detalhesResposta.value = null
+  } finally {
+    carregandoDetalhes.value = false
+  }
+}
+
+function fecharDetalhes() {
+  dialogDetalhes.value = false
+  alunoSelecionado.value = null
+  detalhesResposta.value = null
+}
+
+function getCorItemResposta(correto) {
+  return correto ? 'success' : 'error'
+}
 </script>
 
 <style scoped>
@@ -377,5 +517,19 @@ function getCorTextoNota(nota) {
 /* Esconde paginação */
 .tabela-sem-paginacao :deep(.v-data-table-footer) {
   display: none !important;
+}
+
+/* Item de resposta no modal */
+.resposta-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.resposta-item.bg-success-lighten-5 {
+  border-left-color: #4caf50;
+}
+
+.resposta-item.bg-error-lighten-5 {
+  border-left-color: #f44336;
 }
 </style>
