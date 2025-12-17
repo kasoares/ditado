@@ -184,9 +184,6 @@
       </v-card-title>
 
       <v-card-text class="pa-2 pt-0">
-        <div class="text-caption text-grey-darken-1">
-          Clique em um ditado para ver os detalhes. Também é possível usar o botão "Visualizar" em Ações.
-        </div>
       </v-card-text>
 
       <v-data-table
@@ -194,10 +191,8 @@
         :headers="headers"
         :items="ditadosFiltrados"
         :loading="carregando"
-        class="elevation-0 cursor-pointer-row"
+        class="elevation-0"
         density="comfortable"
-        hover
-        @click:row="abrirDetalhesDitado"
       >
         <template v-slot:header.acoes>
           <div class="acoes-header text-right">Ações</div>
@@ -239,6 +234,14 @@
 
         <template v-slot:item.acoes="{ item }">
           <div class="d-flex gap-2 justify-end" @click.stop>
+            <v-btn
+              icon="mdi-magnify"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Visualizar ditado"
+              @click.stop="abrirDetalhesDitado(null, { item }, { mostrarAtribuir: true })"
+            />
             <v-btn
               icon="mdi-school"
               size="small"
@@ -816,10 +819,21 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 .gap-2 { gap: 8px; }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; }
 .cursor-pointer-row :deep(tbody tr) {
-  cursor: pointer;
+  /* removed pointer cursor */
 }
 .cursor-pointer-row :deep(tbody tr:hover) {
-  background-color: #f5f5f5 !important;
+  /* removed hover background color */
 }
-.acoes-header { padding-right: 32px; }
+.acoes-header { padding-right: 12px; }
+
+/* Prevent Vuetify data-table row hover/selection visual changes */
+:deep(.v-data-table) :deep(tbody tr[aria-selected="true"]) {
+  background: transparent !important;
+}
+:deep(.v-data-table) :deep(tbody tr.v-data-table__selected) {
+  background: transparent !important;
+}
+:deep(.v-data-table) :deep(tbody tr:hover) {
+  background: transparent !important;
+}
 </style>
