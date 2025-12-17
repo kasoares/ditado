@@ -170,6 +170,10 @@
         Biblioteca de Ditados Cadastrados
       </v-card-title>
 
+      <div class="pa-4 pt-2 pb-0">
+        <div class="text-caption text-grey-darken-1">Clique em um ditado para visualizar os detalhes. Ou use o botão "Visualizar" em Ações.</div>
+      </div>
+
       <v-data-table
         v-if="ditadosFiltrados.length > 0"
         :headers="headers"
@@ -217,6 +221,14 @@
 
         <template v-slot:item.acoes="{ item }">
           <div class="d-flex gap-2 justify-end" @click.stop>
+            <v-btn
+              icon="mdi-eye"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Visualizar detalhes"
+              @click="abrirDetalhesSimples(item)"
+            />
             <v-btn
               icon="mdi-school"
               size="small"
@@ -588,6 +600,12 @@ async function abrirDetalhesDitado(event, { item }) {
     console.error('Erro ao carregar detalhes do ditado:', erro);
     mostrarSnackbar('Não foi possível carregar os detalhes do ditado.', 'warning');
   }
+}
+
+// Helper para abrir detalhes a partir de ações (botão)
+function abrirDetalhesSimples(item) {
+  // Reaproveita a função existente que espera (event, { item })
+  abrirDetalhesDitado(null, { item })
 }
 
 function getAudioSrc(base64) {
