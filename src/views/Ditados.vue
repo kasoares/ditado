@@ -186,6 +186,9 @@
         hover
         @click:row="abrirDetalhesDitado"
       >
+        <template v-slot:header.acoes>
+          <div class="text-right" style="padding-right:16px">Ações</div>
+        </template>
         <template v-slot:item.titulo="{ item }">
           <div class="font-weight-bold">{{ item.titulo }}</div>
         </template>
