@@ -158,14 +158,16 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <v-btn
-            icon="mdi-chart-box-outline"
-            size="small"
-            variant="text"
-            color="primary"
-            title="Ver resultados detalhados"
-            @click="verResultadosTurma(item)"
-          />
+          <div class="d-flex justify-center">
+            <v-btn
+              icon="mdi-chart-box-outline"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Ver resultados detalhados"
+              @click="verResultadosTurma(item)"
+            />
+          </div>
         </template>
 
         <template v-slot:no-data>
@@ -195,7 +197,7 @@
         density="comfortable"
       >
         <template v-slot:header.acoes>
-          <div class="acoes-header text-right">Ações</div>
+          <div class="acoes-header text-center">Ações</div>
         </template>
         <template v-slot:item.titulo="{ item }">
           <div class="font-weight-bold">{{ item.titulo }}</div>
@@ -233,7 +235,7 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <div class="d-flex gap-2 justify-end" @click.stop>
+          <div class="d-flex gap-2 justify-center" @click.stop>
             <v-btn
               icon="mdi-magnify"
               size="small"
@@ -499,13 +501,13 @@ const headers = [
   { title: 'Categorias', key: 'categorias' },
   { title: 'Palavras Omitidas', key: 'palavrasOmitidas', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', align: 'end', sortable: false }
+  { title: 'Ações', key: 'acoes', align: 'center', sortable: false }
 ]
 
 const headersAtribuidos = [
   { title: 'Turma', key: 'turmaNome' },
   { title: 'Ditado', key: 'ditadoTitulo' },
-  { title: 'Visualizar', key: 'visualizar', align: 'center', sortable: false },
+  { title: '', key: 'visualizar', align: 'center', sortable: false },
   { title: 'Prazo', key: 'dataLimite', align: 'center' },
   { title: 'Status', key: 'vencido', align: 'center' },
   { title: 'Engajamento', key: 'percentualConclusao', align: 'center', minWidth: '150px' },
@@ -824,7 +826,7 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 .cursor-pointer-row :deep(tbody tr:hover) {
   /* removed hover background color */
 }
-.acoes-header { padding-right: 12px; }
+.acoes-header { padding-right: 0px; }
 
 /* Prevent Vuetify data-table row hover/selection visual changes */
 :deep(.v-data-table) :deep(tbody tr[aria-selected="true"]) {
