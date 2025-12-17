@@ -43,6 +43,19 @@
           <div class="font-weight-bold">{{ item.ditadoTitulo }}</div>
         </template>
 
+        <template v-slot:item.visualizar="{ item }">
+          <div class="d-flex justify-center" style="padding-left:4px">
+            <v-btn
+              icon="mdi-magnify"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Visualizar texto do ditado"
+              @click.stop="abrirDetalhesDitado(null, { item }, { mostrarAtribuir: false })"
+            />
+          </div>
+        </template>
+
         <template v-slot:item.dataLimite="{ item }">
           <div :class="item.vencido ? 'text-error font-weight-bold' : ''">
             {{ formatarData(item.dataLimite) }}
@@ -94,14 +107,16 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <v-btn
-            icon="mdi-chart-box-outline"
-            size="small"
-            variant="text"
-            color="primary"
-            title="Ver resultados detalhados"
-            @click="verResultadosTurma(item)"
-          />
+          <div class="d-flex justify-center">
+            <v-btn
+              icon="mdi-chart-box-outline"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Ver resultados detalhados"
+              @click="verResultadosTurma(item)"
+            />
+          </div>
         </template>
 
         <template v-slot:no-data>
@@ -171,9 +186,6 @@
       </v-card-title>
 
       <v-card-text class="pa-2 pt-0">
-        <div class="text-caption text-grey-darken-1">
-          Clique em um ditado para ver os detalhes. Também é possível usar o botão "Visualizar" em Ações.
-        </div>
       </v-card-text>
 
       <v-data-table
@@ -181,13 +193,11 @@
         :headers="headers"
         :items="ditadosFiltrados"
         :loading="carregando"
-        class="elevation-0 cursor-pointer-row"
+        class="elevation-0"
         density="comfortable"
-        hover
-        @click:row="abrirDetalhesDitado"
       >
         <template v-slot:header.acoes>
-          <div class="acoes-header text-right">Ações</div>
+          <div class="acoes-header text-center">Ações</div>
         </template>
         <template v-slot:item.titulo="{ item }">
           <div class="font-weight-bold">{{ item.titulo }}</div>
@@ -225,7 +235,15 @@
         </template>
 
         <template v-slot:item.acoes="{ item }">
-          <div class="d-flex gap-2 justify-end" @click.stop>
+          <div class="d-flex gap-2 justify-center" @click.stop>
+            <v-btn
+              icon="mdi-magnify"
+              size="small"
+              variant="text"
+              color="primary"
+              title="Visualizar ditado"
+              @click.stop="abrirDetalhesDitado(null, { item }, { mostrarAtribuir: true })"
+            />
             <v-btn
               icon="mdi-eye"
               size="small"
@@ -332,7 +350,17 @@
           </div>
         </v-card-text>
 
-        <!-- A ação de atribuir foi removida do modal de visualização -->
+        <v-card-actions class="pa-4 bg-grey-lighten-5" v-if="mostrarAtribuir">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="flat"
+            @click="atribuirDoDetalhe(ditadoDetalhes)"
+          >
+            Atribuir Ditado
+          </v-btn>
+        </v-card-actions>
+
       </v-card>
     </v-dialog>
 
@@ -465,6 +493,7 @@ const dialogAtribuirTurma = ref(false)
 const turmaParaAtribuir = ref(null)
 const dataLimiteAtribuicao = ref('')
 const atribuindoTurma = ref(false)
+const mostrarAtribuir = ref(true)
 
 const snackbar = ref({
   show: false,
@@ -480,12 +509,13 @@ const headers = [
   { title: 'Categorias', key: 'categorias' },
   { title: 'Palavras Omitidas', key: 'palavrasOmitidas', align: 'center' },
   { title: 'Data de Criação', key: 'dataCriacao', sortable: true },
-  { title: 'Ações', key: 'acoes', align: 'end', sortable: false }
+  { title: 'Ações', key: 'acoes', align: 'center', sortable: false }
 ]
 
 const headersAtribuidos = [
   { title: 'Turma', key: 'turmaNome' },
   { title: 'Ditado', key: 'ditadoTitulo' },
+  { title: '', key: 'visualizar', align: 'center', sortable: false },
   { title: 'Prazo', key: 'dataLimite', align: 'center' },
   { title: 'Status', key: 'vencido', align: 'center' },
   { title: 'Engajamento', key: 'percentualConclusao', align: 'center', minWidth: '150px' },
@@ -552,7 +582,7 @@ async function carregarTurmas() {
 
 // --- LÓGICA DE VISUALIZAÇÃO DE DETALHES ---
 
-async function abrirDetalhesDitado(event, { item }) {
+async function abrirDetalhesDitado(event, { item }, options = {}) {
   try {
     const idParaBuscar = item.id || item.ditadoId;
     
@@ -560,6 +590,9 @@ async function abrirDetalhesDitado(event, { item }) {
       mostrarSnackbar('Erro: ID do ditado inválido.', 'error');
       return;
     }
+
+    // Define se deve mostrar o botão de atribuir (padrão: true)
+    mostrarAtribuir.value = options?.mostrarAtribuir ?? true
 
     // Abre o modal
     dialogDetalhes.value = true;
@@ -796,10 +829,21 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 .gap-2 { gap: 8px; }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; }
 .cursor-pointer-row :deep(tbody tr) {
-  cursor: pointer;
+  /* removed pointer cursor */
 }
 .cursor-pointer-row :deep(tbody tr:hover) {
-  background-color: #f5f5f5 !important;
+  /* removed hover background color */
 }
-.acoes-header { padding-right: 32px; }
+.acoes-header { padding-right: 0px; }
+
+/* Prevent Vuetify data-table row hover/selection visual changes */
+:deep(.v-data-table) :deep(tbody tr[aria-selected="true"]) {
+  background: transparent !important;
+}
+:deep(.v-data-table) :deep(tbody tr.v-data-table__selected) {
+  background: transparent !important;
+}
+:deep(.v-data-table) :deep(tbody tr:hover) {
+  background: transparent !important;
+}
 </style>
