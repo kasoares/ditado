@@ -67,6 +67,16 @@ export const ditadoService = {
     }
   },
 
+  async visualizar(id) {
+    try {
+      const response = await api.get(`/Ditados/${id}/visualizar`)
+      return response.data
+    } catch (erro) {
+      console.error('Erro ao visualizar ditado:', erro.response?.data || erro)
+      throw erro
+    }
+  },
+
   async criar(dados) {
     try {
       const response = await api.post('/Ditados', dados)

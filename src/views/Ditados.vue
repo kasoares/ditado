@@ -282,11 +282,11 @@
         
         <v-card-text class="pa-6">
           <h2 class="text-h5 font-weight-bold mb-2">{{ ditadoDetalhes.titulo }}</h2>
-          <v-chip class="mb-4" size="small" v-if="ditadoDetalhes.categorias.length">
+          <v-chip class="mb-4" size="small" v-if="ditadoDetalhes.categorias && ditadoDetalhes.categorias.length">
              {{ ditadoDetalhes.categorias.map(c => c.nome).join(', ') }}
           </v-chip>
 
-          <p class="text-body-1 mb-4 text-grey-darken-3" style="white-space: pre-wrap;">
+          <p v-if="ditadoDetalhes.descricao" class="text-body-2 mb-4 text-grey-darken-2">
             {{ ditadoDetalhes.descricao }}
           </p>
 
@@ -294,7 +294,7 @@
 
           <div class="bg-grey-lighten-4 pa-4 rounded mb-4">
             <div class="text-caption text-grey-darken-1 mb-2 font-weight-bold">TEXTO ORIGINAL (COM MARCAÇÕES):</div>
-            <p class="font-italic text-body-2">
+            <p class="font-italic text-body-2" style="white-space: pre-wrap;">
               {{ ditadoDetalhes.textoComMarcacoes || 'Texto não disponível' }}
             </p>
           </div>
@@ -545,7 +545,6 @@ async function carregarTurmas() {
 
 // --- LÓGICA DE VISUALIZAÇÃO DE DETALHES ---
 
-// Substitua a função antiga por esta versão corrigida
 async function abrirDetalhesDitado(event, { item }) {
   try {
     const idParaBuscar = item.id || item.ditadoId;
@@ -555,31 +554,49 @@ async function abrirDetalhesDitado(event, { item }) {
       return;
     }
 
-    // 1. Preenchemos o modal imediatamente com o que já temos na tabela
-    // (Isso evita que o modal fique vazio enquanto carrega)
-    ditadoDetalhes.value = { ...item }; 
+    // Abre o modal
     dialogDetalhes.value = true;
 
-    // 2. O PULO DO GATO 🐈: Usamos a rota "buscarParaRealizar"
-    // Essa é a única rota que confirmamos que retorna o 'audioBase64'.
-    // A rota antiga (buscarPorId) estava dando erro 405.
-    const dadosCompletos = await ditadoService.buscarParaRealizar(idParaBuscar);
+    // Usa o novo endpoint /api/Ditados/{id}/visualizar
+    const dadosCompletos = await ditadoService.visualizar(idParaBuscar);
     
-    console.log('Dados recebidos com sucesso:', dadosCompletos);
+    console.log('Dados completos recebidos:', dadosCompletos);
 
-    // 3. Atualizamos o modal com o áudio e o texto completo
+    // Se a API retornar `segmentos`, reconstruímos o texto original
+    let textoComMarcacoes = '';
+    if (Array.isArray(dadosCompletos.segmentos) && dadosCompletos.segmentos.length > 0) {
+      // Ordena por ordem e concatena os conteúdos
+      // Se o segmento for do tipo 'Lacuna', garante que venha com colchetes: [palavra]
+      textoComMarcacoes = dadosCompletos.segmentos
+        .slice()
+        .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+        .map(s => {
+          const tipo = (s.tipo || '').toString().toLowerCase()
+          const conteudo = s.conteudo || ''
+          if (tipo === 'lacuna' || tipo === 'lacunas') {
+            // já tem colchetes?
+            if (conteudo.startsWith('[') && conteudo.endsWith(']')) return conteudo
+            return `[${conteudo}]`
+          }
+          return conteudo
+        })
+        .join('');
+    } else {
+      // Fallbacks: preferir textoComMarcacoes, depois texto, depois descricao
+      textoComMarcacoes = dadosCompletos.textoComMarcacoes || dadosCompletos.texto || dadosCompletos.descricao || '';
+    }
+
+    // Atualiza o modal com os dados completos do endpoint e o texto reconstruído
     ditadoDetalhes.value = {
-      ...ditadoDetalhes.value, // Mantém os dados que já tínhamos
-      audioBase64: dadosCompletos.audioBase64, // O áudio que funciona!
-      textoComMarcacoes: dadosCompletos.textoComMarcacoes || item.descricao
+      ...item,
+      ...dadosCompletos,
+      textoComMarcacoes,
+      segmentos: dadosCompletos.segmentos || []
     };
     
   } catch (erro) {
-    console.error('Erro ao carregar áudio:', erro);
-    
-    // Dica para depuração: Se der erro 403, é porque o professor não tem permissão nessa rota.
-    // Se der 404, o ID está errado.
-    mostrarSnackbar('Não foi possível carregar o áudio. Tente novamente.', 'warning');
+    console.error('Erro ao carregar detalhes do ditado:', erro);
+    mostrarSnackbar('Não foi possível carregar os detalhes do ditado.', 'warning');
   }
 }
 
@@ -670,6 +687,11 @@ function removerFiltroCategoria(categoriaId) {
 }
 
 function calcularPalavrasOmitidas(ditado) {
+  // Se o ditado vier com segmentos, contamos os segmentos do tipo 'Lacuna'
+  if (Array.isArray(ditado.segmentos) && ditado.segmentos.length > 0) {
+    return ditado.segmentos.filter(s => (s.tipo || '').toString().toLowerCase() === 'lacuna').length
+  }
+
   const textoParaAnalisar = ditado.textoComMarcacoes || ditado.descricao || '';
   if (!textoParaAnalisar) return ditado.palavrasOmitidas || 0;
   const matches = textoParaAnalisar.match(/\[([^\]]+)\]/g);
