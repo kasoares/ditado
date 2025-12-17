@@ -187,7 +187,7 @@
         @click:row="abrirDetalhesDitado"
       >
         <template v-slot:header.acoes>
-          <div class="text-right" style="padding-right:16px">Ações</div>
+          <div class="acoes-header text-right">Ações</div>
         </template>
         <template v-slot:item.titulo="{ item }">
           <div class="font-weight-bold">{{ item.titulo }}</div>
@@ -793,4 +793,5 @@ function mostrarSnackbar(mensagem, cor = 'success') {
 .cursor-pointer-row :deep(tbody tr:hover) {
   background-color: #f5f5f5 !important;
 }
+.acoes-header { padding-right: 32px; }
 </style>
